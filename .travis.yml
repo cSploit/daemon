@@ -1,2 +1,5 @@
 language: c
+before_script:
+  - wget "https://github.com/cSploit/common/archive/master.zip" -O ../common.zip
+  - (cd .. ; unzip -q common.zip ; mv common-master cSploitCommon )
 script: make
