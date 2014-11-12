@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/cSploit/daemon.svg)](https://travis-ci.org/cSploit/daemon)
 cSploitd
 ======
 
