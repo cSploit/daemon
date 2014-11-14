@@ -202,11 +202,6 @@ struct cmd_start_data *extract_start_data(message *m, char skip_argv0) {
   
   memset(data, 0, sizeof(struct cmd_start_data));
   
-  if(!n) {
-    print( DEBUG, "empty array" );
-    return data;
-  }
-  
   if(start_info->argc > n) {
     print( ERROR, "argc out of bounds ( argc=%d, n=%d )", start_info->argc, n);
     goto error;
