@@ -19,7 +19,7 @@
 #define DSPLOITD_H
 
 /// path of the socket
-#define SOCKET_PATH "cSploit.sock"
+#define SOCKET_PATH "/dev/socket/cSploit"
 
 /// path to logfile
 #define LOG_PATH "cSploitd.log"
