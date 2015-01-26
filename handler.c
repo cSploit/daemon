@@ -43,9 +43,18 @@ list handlers;
 int check_handler(handler *h) {
   char *test;
   int ret;
+  handler *tmp;
   
   if(!(h->enabled)) {
     print( WARNING, "handler '%s' disabled", h->name);
+    return -1;
+  }
+  
+  for(tmp=(handler *) handlers.head; tmp && tmp->id != h->id; tmp=(handler *) tmp->next);
+  
+  if(tmp) {
+    print( ERROR, "handler '%s' and '%s' has the same ID ( %d ). '%s' will be disabled.",
+            tmp->name, h->name, h->id, h->name);
     return -1;
   }
   
@@ -82,7 +91,7 @@ int check_handler(handler *h) {
 int load_handlers() {
   DIR *d;
   struct dirent *de;
-  handler *h,*tmp;
+  handler *h;
   char *path, *cwd;
   void *handle;
   size_t len;
@@ -166,15 +175,6 @@ int load_handlers() {
   if(!handlers.head) {
     print( ERROR, "no handlers found" );
     return -1;
-  }
-  
-  for(h=(handler *) handlers.head;h->next;h=(handler *) h->next) {
-    for(tmp=(handler *) h->next;tmp && tmp->id != h->id; tmp=(handler *) tmp->next);
-    if(tmp) {
-      print(ERROR, "\"%s\" and \"%s\" has the same id. (id=%d)\n",
-              h->name, tmp->name, h->id);
-      return -1;
-    }
   }
   
   return 0;
