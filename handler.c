@@ -58,19 +58,23 @@ int check_handler(handler *h) {
     return -1;
   }
   
-  if(h->argv0) {
-    if(h->workdir) {
-      if(asprintf(&test, "%s/%s", h->workdir, h->argv0) == -1) {
-        print( ERROR, "asprintf: %s", strerror(errno) );
-        return -1;
-      }
-    } else {
-      test = (char *) h->argv0;
+  if(h->workdir) {
+    if(access(h->workdir, X_OK)) {
+      print( ERROR, "access(\"%s\", X_OK): %s", h->workdir, strerror(errno));
+      return -1;
     }
-  } else if(h->workdir) {
-    test = (char *) h->workdir;
-  } else {
+  }
+  
+  if(!(h->argv0) || !strchr(h->argv0, '/'))
     return 0;
+    
+  if(h->workdir) {
+    if(asprintf(&test, "%s/%s", h->workdir, h->argv0) == -1) {
+      print( ERROR, "asprintf: %s", strerror(errno) );
+      return -1;
+    }
+  } else {
+    test = (char *) h->argv0;
   }
   
   ret = access(test , X_OK);
@@ -78,7 +82,7 @@ int check_handler(handler *h) {
     print( ERROR, "access(\"%s\", X_OK): %s", test, strerror(errno));
   }
     
-  if(test != h->argv0 && test != h->workdir)
+  if(test != h->argv0)
     free(test);
   
   return ret;
