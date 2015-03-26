@@ -53,6 +53,8 @@ int register_signal_handlers() {
     return -1;
   }
   
+   signal(SIGPIPE, SIG_IGN);
+  
   //TODO: SIGSEGV core dumper ( like ettercap )
   
   return 0;
