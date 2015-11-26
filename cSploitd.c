@@ -28,15 +28,16 @@
 #include <string.h>
 #include <pthread.h>
 
+#include <csploit/message.h>
+#include <csploit/logger.h>
+#include <csploit/file_logger.h>
+
 #include "cSploitd.h"
-#include "message.h"
 #include "connection.h"
 #include "cleanup.h"
 #include "handler.h"
 #include "reaper.h"
-#include "logger.h"
 #include "authenticator.h"
-#include "file_logger.h"
 
 int sockfd;
 

@@ -25,13 +25,14 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#include "logger.h"
-#include "list.h"
+#include <csploit/logger.h>
+#include <csploit/list.h>
+#include <csploit/msgqueue.h>
+#include <csploit/sequence.h>
+#include <csploit/control_messages.h>
+
 #include "handler.h"
-#include "msgqueue.h"
-#include "sequence.h"
 #include "connection.h"
-#include "control_messages.h"
 
 list handlers;
 
