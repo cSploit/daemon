@@ -46,3 +46,7 @@ crashlytics.properties
 crashlytics-build.properties
 fabric.properties
 # Created by .ignore support plugin (hsz.mobi)
+
+sample_nmap_out.xml
+*.tar.gz
+*.db
