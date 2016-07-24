@@ -1,0 +1,32 @@
+/* cSploit - a simple penetration testing suite
+ * Copyright (C) 2016 Massimo Dragano aka tux_mind <tux_mind@csploit.org>
+ *
+ * cSploit is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * cSploit is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with cSploit.  If not, see <http://www.gnu.org/licenses/\>.
+ *
+ */
+package models
+
+type Network struct {
+	ID        uint   `gorm:"primary_key" json:"id"`
+	IfaceName string `json:"iface_name"`
+	IpAddr    string `json:"ip_addr"`
+	Hosts     []Host `json:"hosts"`
+}
+
+func NewNetwork(ifName, ipAddr string) *Network {
+	return &Network{
+		IfaceName: ifName,
+		IpAddr:    ipAddr,
+	}
+}

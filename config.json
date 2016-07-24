@@ -1,0 +1,8 @@
+{
+  "db": {
+    "dialect": "sqlite3",
+    "args": [
+      "./dev.db"
+    ]
+  }
+}
