@@ -26,6 +26,7 @@ import (
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
+	"github.com/vektra/errors"
 	"golang.org/x/net/context"
 	"math"
 	"net"
@@ -303,7 +304,7 @@ func ProbeKnownHosts(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 
 	if net4 := netHelper.IPNetTo4(ipNet); net4 == nil {
-		return fmt.Errorf("IPv6 not implemented yet")
+		return errors.New("IPv6 not implemented yet")
 	} else {
 		ipNet = net4
 		ctx = ctxHelper.WithIpNet(ctx, ipNet)
