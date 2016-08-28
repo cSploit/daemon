@@ -33,7 +33,10 @@ import (
 	"time"
 )
 
+// hosts4sock is preferred amount of hosts t probe per open socket
 const hosts4sock = 32
+
+// maxSocks is maximum number of opened sockets
 const maxSocks = 32
 
 func walkNetwork(ctx context.Context) <-chan net.IP {
@@ -54,7 +57,6 @@ func walkNetwork(ctx context.Context) <-chan net.IP {
 
 		for netHelper.NextIP(ip); !ip.Equal(bcast); netHelper.NextIP(ip) {
 			res := netHelper.CopyIP(ip)
-			//TODO: check ip := ip trick
 			select {
 			case c <- res:
 			case <-ctx.Done():
