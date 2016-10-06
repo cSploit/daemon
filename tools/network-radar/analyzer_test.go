@@ -36,8 +36,9 @@ var goodNBQueryPkt = []byte{
 }
 
 var arpRequestPkt = []byte{
-	0, 4, 0, 1, 0, 6, 100, 112, 2, 218, 3, 5, 0, 0, 8, 6, // Linux cooked capture
-	0, 0, 4, 0, 1, 0, 6, 100, 112, 2, 218, 3, 5, 0, 0, 8, 6, 0, 0, 4, 0, 1, 0, 6, 100, 112, 2, 218, 3, 5, 0, 0, 8, 6, 0,
+	0x00, 0x01, 0x00, 0x01, 0x00, 0x06, 0x64, 0xbc, 0x0c, 0x83, 0x97, 0x99, 0x00, 0x00, 0x08, 0x06,
+	0x00, 0x01, 0x08, 0x00, 0x06, 0x04, 0x00, 0x01, 0x64, 0xbc, 0x0c, 0x83, 0x97, 0x99, 0xc0, 0xa8,
+	0x00, 0x39, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xc0, 0xa8, 0x00, 0x01,
 }
 
 func TestAnalyzeNetBIOS(t *testing.T) {
@@ -59,4 +60,12 @@ func TestAnalyzeARP(t *testing.T) {
 	for _, l := range pkt.Layers() {
 		t.Logf("contains: %v", l.LayerType())
 	}
+
+	t.Logf("Link layer: %v", pkt.LinkLayer())
+
+	if pkt.Layer(layers.LayerTypeARP) == nil {
+		t.Error("created packet do not implement ARP layer")
+		t.Fail()
+	}
+
 }
