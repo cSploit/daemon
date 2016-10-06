@@ -131,9 +131,7 @@ func startAnalyze(ctx context.Context) error {
 		ifName = ctxHelper.GetIface(ctx).Name
 	}
 
-	//TODO: set snaplen to the maximum interested quantity
-	//FIXME: this is not possible in a portable manner ( not Ethernet specific ) ( maybe compute the biggest one ? )
-	handle, err := pcap.OpenLive(ifName, 44, true, pcap.BlockForever)
+	handle, err := pcap.OpenLive(ifName, 1024, true, pcap.BlockForever)
 
 	if err != nil {
 		return err
