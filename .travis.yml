@@ -1,1 +1,6 @@
 language: go
+
+addons:
+  apt:
+    packages:
+    - libpcap-dev
