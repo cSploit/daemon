@@ -1,6 +1,8 @@
 cSploit daemon
 ==============
 
+[![Build Status](https://travis-ci.org/cSploit/daemon.svg?branch=develop)](https://travis-ci.org/cSploit/daemon)
+
 This is the core of the cSploit project.
 It manage, provide find and work with found resources.
 
