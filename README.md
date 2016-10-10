@@ -20,14 +20,14 @@ Testing
 
 To run tests simply run:
 
-```
+```bash
 go test -v ./... # run all tests in './'
 go test -v ./tools/... # run all tests in './tools'
 ```
 
 to start the daemon:
 
-```
+```bash
 cd /path/to/cSploit/daemon/project
 sudo -E go run daemon.go # root needed to sniff packets
 ```
@@ -41,7 +41,7 @@ Development
 If you want to import your new cool classes without pushing to github you
 have to do some trick:
 
-```sh
+```bash
 rm -rf $GOPATH/src/github.com/cSploit/daemon
 cd /path/to/cSploit/daemon/project
 ln -s $(pwd) $GOPATH/src/github.com/cSploit/daemon
