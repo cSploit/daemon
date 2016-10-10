@@ -17,6 +17,11 @@
  */
 package models
 
+import (
+	netHelper "github.com/cSploit/daemon/helpers/net"
+	"net"
+)
+
 type Network struct {
 	ID        uint   `gorm:"primary_key" json:"id"`
 	IfaceName string `json:"iface_name"`
@@ -29,4 +34,64 @@ func NewNetwork(ifName, ipAddr string) *Network {
 		IfaceName: ifName,
 		IpAddr:    ipAddr,
 	}
+}
+
+func FindNetwork(ipNet *net.IPNet) *Network {
+	network := &Network{}
+
+	dbRes := db.Where("ip_addr = ?", ipNet.String()).Find(network)
+
+	if dbRes.RecordNotFound() {
+		return nil
+	} else if dbRes.Error != nil {
+		log.Warning(dbRes.Error)
+		return nil
+	}
+
+	return network
+}
+
+func CreateNetwork(ipNet *net.IPNet) *Network {
+	var ifName string
+
+	if iface, err := netHelper.InterfaceForIp(ipNet.IP); err != nil {
+		log.Error(err)
+		ifName = "unknown"
+	} else {
+		ifName = iface.Name
+	}
+
+	network := NewNetwork(ifName, ipNet.String())
+
+	dbRes := db.Create(network)
+
+	if dbRes.Error != nil {
+		log.Error(dbRes.Error)
+		return nil
+	}
+
+	return network
+}
+
+func FindOrCreateNetwork(ipNet *net.IPNet) *Network {
+	res := FindNetwork(ipNet)
+
+	if res == nil {
+		res = CreateNetwork(ipNet)
+	}
+
+	return res
+}
+
+func (n *Network) GetHosts() []Host {
+	var hosts []Host
+
+	dbRes := db.Where("network_id = ?", n.ID).Find(&hosts)
+
+	if dbRes.Error != nil {
+		log.Error(dbRes.Error)
+		return hosts
+	}
+
+	return hosts
 }

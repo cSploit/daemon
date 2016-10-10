@@ -64,3 +64,19 @@ func TestNumHosts(t *testing.T) {
 
 	a.Equal(uint64(16777216)-2, res)
 }
+
+func TestMacConversion(t *testing.T) {
+	mac1, _ := net.ParseMAC("01:23:45:67:89:ab")
+	mac2, _ := net.ParseMAC("01:23:45:67:89:ab:cd:ef")
+	mac3, _ := net.ParseMAC("01:23:45:67:89:ab:cd:ef:00:00:01:23:45:67:89:ab:cd:ef:00:00")
+
+	if _, err := MacAddrToUInt(mac1); err != nil {
+		t.Fatalf("unable to convert %v to id: %v", mac1, err)
+	}
+	if _, err := MacAddrToUInt(mac2); err != nil {
+		t.Fatalf("unable to convert %v to id: %v", mac2, err)
+	}
+	if _, err := MacAddrToUInt(mac3); err != nil {
+		t.Fatalf("unable to convert %v to id: %v", mac3, err)
+	}
+}

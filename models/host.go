@@ -18,9 +18,11 @@
 package models
 
 import (
+	netHelper "github.com/cSploit/daemon/helpers/net"
 	"github.com/lair-framework/go-nmap"
 	"github.com/op/go-logging"
 	"gopkg.in/guregu/null.v3"
+	"net"
 	"time"
 )
 
@@ -63,4 +65,57 @@ func NewHost(h nmap.Host) *Host {
 	}
 
 	return res
+}
+
+func NotifyHostSeen(hwAddr net.HardwareAddr, ipAddr net.IP, name string) error {
+	hwId, err := netHelper.MacAddrToUInt(hwAddr)
+
+	if err != nil {
+		return err
+	}
+
+	var HwAddrEntity HwAddr
+
+	dbRes := db.Preload("Host").Find(&HwAddrEntity, hwId)
+
+	if dbRes.RecordNotFound() {
+		return onNewHost(hwAddr, ipAddr, name)
+	} else if dbRes.Error != nil {
+		return dbRes.Error
+	}
+
+	host := HwAddrEntity.Host
+
+	if host == nil {
+		return onNewHostWithHwAddr(&HwAddrEntity, ipAddr, name)
+	}
+
+	return onHostSeen(host, ipAddr, name)
+}
+
+//TODO: fire an event for each of these functions
+
+func onNewHost(hwAddr net.HardwareAddr, ipAddr net.IP, name string) error {
+	hw, err := NewHwAddr(hwAddr)
+
+	if err != nil {
+		return err
+	}
+
+	return onNewHostWithHwAddr(hw, ipAddr, name)
+}
+
+func onNewHostWithHwAddr(hwAddr *HwAddr, ipAddr net.IP, name string) error {
+	nullName := null.NewString(name, len(name) > 0)
+
+	host := Host{HwAddr: hwAddr, IpAddr: ipAddr.String(), Name: nullName}
+
+	return db.Create(&host).Error
+}
+
+func onHostSeen(host *Host, ipAddr net.IP, name string) error {
+	host.IpAddr = ipAddr.String()
+	host.Name = null.NewString(name, len(name) > 0)
+	host.UpdatedAt = time.Now()
+	return db.Save(host).Error
 }

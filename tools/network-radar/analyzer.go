@@ -23,7 +23,7 @@ import (
 
 	ctxHelper "github.com/cSploit/daemon/helpers/ctx"
 	netHelper "github.com/cSploit/daemon/helpers/net"
-	"github.com/cSploit/daemon/tools/network-radar/model"
+	"github.com/cSploit/daemon/models"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
@@ -118,7 +118,7 @@ func analyzeNetworkPkt(pkt gopacket.Packet) {
 	hwAddr := net.HardwareAddr(lle.Raw())
 	ipAddr := net.IP(nlSrc.Raw())
 
-	if err := model.NotifyHostSeen(hwAddr, ipAddr, ""); err != nil {
+	if err := models.NotifyHostSeen(hwAddr, ipAddr, ""); err != nil {
 		log.Error(err)
 	}
 }
