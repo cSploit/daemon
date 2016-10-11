@@ -13,8 +13,8 @@ type (
 	// AP discovered thanks to airodump-ng
 	AP struct {
 		Bssid   string `json:"bssid"`
-		First   string `json:"first seen at"`
-		Last    string `json:"last seen at"`
+		First   string `json:"first_seen_at"`
+		Last    string `json:"last_seen_at"`
 		Channel int    `json:"channel"`
 		Speed   int    `json:"speed"`
 		Privacy string `json:"privacy"`
@@ -23,8 +23,8 @@ type (
 		Power   int    `json:"power"`
 		Beacons int    `json:"beacons"`
 		IVs     int    `json:"ivs"`
-		Lan     string `json:"lan ip"`
-		IdLen   int    `json:"id len"`
+		Lan     string `json:"lan_ip"`
+		IdLen   int    `json:"id_len"`
 		Essid   string `json:"essid"`
 		Key     string `json:"key"`
 		//Wps     bool   `json:"wps"`
@@ -34,12 +34,12 @@ type (
 	Client struct {
 		// MAC address
 		Station string `json:"station"`
-		First   string `json:"first seen at"`
-		Last    string `json:"last seen at"`
+		First   string `json:"first_seen_at"`
+		Last    string `json:"last_seen_at"`
 		Power   int    `json:"power"`
 		Packets int    `json:"packets"`
 		Bssid   string `json:"bssid"`
-		Probed  string `json:"probed essids"`
+		Probed  string `json:"probed_essids"`
 	}
 )
 

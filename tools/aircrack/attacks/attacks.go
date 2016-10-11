@@ -10,8 +10,8 @@ type Attack struct {
 	Type    string `json:"type"`
 	Target  string `json:"target"`
 	Running bool   `json:"running"`
-	Started string `json:"started at"`
-	Stopped string `json:"stopped at"`
+	Started string `json:"started_at"`
+	Stopped string `json:"stopped_at"`
 	process *os.Process
 }
 

@@ -21,8 +21,8 @@ type Discovery struct {
 	APs     []AP.AP     `json:"aps"`
 	Clients []AP.Client `json:"clients"`
 	Running bool        `json:"running"`
-	Started string      `json:"started at"`
-	Stopped string      `json:"stopped at"`
+	Started string      `json:"started_at"`
+	Stopped string      `json:"stopped_at"`
 	process *os.Process
 }
 
