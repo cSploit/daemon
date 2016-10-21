@@ -6,9 +6,7 @@ import (
 
 type (
 	Job struct {
-		ID         uint       `gorm:"primary_key" json:"id"`
-		CreatedAt  time.Time  `json:"created_at"`
-		UpdatedAt  time.Time  `json:"updated_at"`
+		base
 		FinishedAt *time.Time `json:"finished_at"`
 		Name       string     `json:"name"`
 	}
