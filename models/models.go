@@ -29,7 +29,7 @@ func Setup() error {
 	var err error
 
 	var models = []interface{}{&Host{}, &Port{}, &Service{},
-		&HwAddr{}, &Network{}}
+		&HwAddr{}, &Network{}, &Job{}, &ProcessJob{}}
 
 	db, err = gorm.Open(config.Conf.Db.Dialect, config.Conf.Db.Args...)
 
