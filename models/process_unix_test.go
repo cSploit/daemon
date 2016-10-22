@@ -20,7 +20,7 @@ func TestCreateProcessJob(t *testing.T) {
 func TestFindProcessJob(t *testing.T) {
 	pj, _ := CreateProcessJob("date")
 
-	pj1, err := FindProcessJob(pj.Job.ID)
+	pj1, err := FindProcessJob(pj.JobId)
 
 	require.Nil(t, err)
 	require.NotNil(t, pj1)
