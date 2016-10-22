@@ -4,3 +4,5 @@ addons:
   apt:
     packages:
     - libpcap-dev
+env:
+  - CSPLOIT_CONFIG="${TRAVIS_BUILD_DIR}/config.json"
