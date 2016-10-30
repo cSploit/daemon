@@ -19,12 +19,17 @@ package models
 
 import (
 	netHelper "github.com/cSploit/daemon/helpers/net"
+	"github.com/cSploit/daemon/models/internal"
 	"github.com/lair-framework/go-nmap"
 	"github.com/op/go-logging"
 	"gopkg.in/guregu/null.v3"
 	"net"
 	"time"
 )
+
+func init() {
+	internal.RegisterModels(&Host{})
+}
 
 var log = logging.MustGetLogger("daemon")
 
@@ -38,6 +43,7 @@ type Host struct {
 	Ports     []Port      `json:"ports"`
 	Network   *Network    `json:"-"`
 	NetworkID uint        `json:"network_id,omitempty"`
+	Jobs      []Job       `json:"jobs" gorm:"many2many:job_hosts"`
 }
 
 func NewHost(h nmap.Host) *Host {
@@ -76,7 +82,7 @@ func NotifyHostSeen(hwAddr net.HardwareAddr, ipAddr net.IP, name string) error {
 
 	var HwAddrEntity HwAddr
 
-	dbRes := db.Preload("Host").Find(&HwAddrEntity, hwId)
+	dbRes := internal.Db.Preload("Host").Find(&HwAddrEntity, hwId)
 
 	if dbRes.RecordNotFound() {
 		return onNewHost(hwAddr, ipAddr, name)
@@ -110,12 +116,12 @@ func onNewHostWithHwAddr(hwAddr *HwAddr, ipAddr net.IP, name string) error {
 
 	host := Host{HwAddr: hwAddr, IpAddr: ipAddr.String(), Name: nullName}
 
-	return db.Create(&host).Error
+	return internal.Db.Create(&host).Error
 }
 
 func onHostSeen(host *Host, ipAddr net.IP, name string) error {
 	host.IpAddr = ipAddr.String()
 	host.Name = null.NewString(name, len(name) > 0)
 	host.UpdatedAt = time.Now()
-	return db.Save(host).Error
+	return internal.Db.Save(host).Error
 }

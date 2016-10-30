@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/cSploit/daemon/models/internal"
 	"io"
 	"io/ioutil"
 	"os/exec"
@@ -8,6 +9,10 @@ import (
 	"syscall"
 	"time"
 )
+
+func init() {
+	internal.RegisterModels(&ProcessJob{})
+}
 
 var commands = make(map[uint]*exec.Cmd)
 
@@ -39,7 +44,7 @@ func (m ioManager) Write(p []byte) (int, error) {
 	m.job.Output += string(p)
 	//TODO: save output asynchronously
 	//TODO: save stdout and stderr separately but with correct order ( OutputHolder )
-	if err := db.Model(m.job).Update("Output", m.job.Output).Error; err != nil {
+	if err := internal.Db.Model(m.job).Update("Output", m.job.Output).Error; err != nil {
 		log.Error(err)
 	}
 	return len(p), nil
@@ -59,6 +64,7 @@ func (m ioManager) CloseStdin() (e error) {
 func (pj *ProcessJob) onStartFail(err error) {
 	t := time.Now()
 	status := 0
+	db := internal.Db
 
 	db.Model(pj).Updates(map[string]interface{}{
 		"Output":     err.Error(),
@@ -84,6 +90,7 @@ func runCommand(pj ProcessJob, cmd *exec.Cmd) {
 
 	err := cmd.Wait()
 	end := time.Now()
+	db := internal.Db
 
 	log.Debugf("process %v exited: err=%v", pj, err)
 
@@ -123,7 +130,7 @@ func CreateProcessJob(command string, args ...string) (*ProcessJob, error) {
 		Job:     j,
 	}
 
-	if e := db.Create(pj).Error; e != nil {
+	if e := internal.Db.Create(pj).Error; e != nil {
 		return nil, e
 	}
 
@@ -153,7 +160,7 @@ func CreateProcessJob(command string, args ...string) (*ProcessJob, error) {
 func FindProcessJob(id uint) (*ProcessJob, error) {
 	j := &ProcessJob{}
 
-	if e := db.Find(j, id).Error; e != nil {
+	if e := internal.Db.Find(j, id).Error; e != nil {
 		return nil, e
 	}
 

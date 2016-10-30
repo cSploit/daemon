@@ -83,6 +83,7 @@ func addSomeRemoteHost() {
 }
 
 func main() {
+	//TODO: config.readConfig(...) [ from argv ]
 	var err = models.Setup()
 
 	if err != nil {

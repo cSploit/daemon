@@ -19,8 +19,13 @@ package models
 
 import (
 	netHelper "github.com/cSploit/daemon/helpers/net"
+	"github.com/cSploit/daemon/models/internal"
 	"net"
 )
+
+func init() {
+	internal.RegisterModels(&Network{})
+}
 
 type Network struct {
 	ID        uint   `gorm:"primary_key" json:"id"`
@@ -39,7 +44,7 @@ func NewNetwork(ifName, ipAddr string) *Network {
 func FindNetwork(ipNet *net.IPNet) *Network {
 	network := &Network{}
 
-	dbRes := db.Where("ip_addr = ?", ipNet.String()).Find(network)
+	dbRes := internal.Db.Where("ip_addr = ?", ipNet.String()).Find(network)
 
 	if dbRes.RecordNotFound() {
 		return nil
@@ -63,7 +68,7 @@ func CreateNetwork(ipNet *net.IPNet) *Network {
 
 	network := NewNetwork(ifName, ipNet.String())
 
-	dbRes := db.Create(network)
+	dbRes := internal.Db.Create(network)
 
 	if dbRes.Error != nil {
 		log.Error(dbRes.Error)
@@ -86,7 +91,7 @@ func FindOrCreateNetwork(ipNet *net.IPNet) *Network {
 func (n *Network) GetHosts() []Host {
 	var hosts []Host
 
-	dbRes := db.Where("network_id = ?", n.ID).Find(&hosts)
+	dbRes := internal.Db.Where("network_id = ?", n.ID).Find(&hosts)
 
 	if dbRes.Error != nil {
 		log.Error(dbRes.Error)

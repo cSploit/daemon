@@ -1,12 +1,13 @@
 package models
 
 import (
+	"github.com/cSploit/daemon/models/internal"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
 
 func init() {
-	Setup()
+	internal.OpenDbForTests()
 }
 
 func TestCreateProcessJob(t *testing.T) {
