@@ -15,10 +15,10 @@ type (
 		internal.Base
 		FinishedAt *time.Time `json:"finished_at"`
 		Name       string     `json:"name"`
-		Aps        []AP       `json:"aps" gorm:"many2many:job_aps;"`
+		Aps        []AP       `json:"aps" gorm:"many2many:job_aps"`
 		//TODO: Clients
-		Hosts    []Host    `json:"hosts" gorm:"many2many:job_hosts;"`
-		Networks []Network `json:"networks" gorm:"many2many:job_networks;"`
+		Hosts    []Host    `json:"hosts" gorm:"many2many:job_hosts"`
+		Networks []Network `json:"networks" gorm:"many2many:job_networks"`
 	}
 )
 
