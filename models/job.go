@@ -7,7 +7,7 @@ import (
 
 func init() {
 	internal.RegisterModels(&Job{})
-	internal.RegisterJoinTables("job_hosts", "job_aps", "job_networks")
+	internal.RegisterJoinTables("job_hosts", "job_aps", "job_networks", "job_clients")
 }
 
 type (
@@ -16,9 +16,9 @@ type (
 		FinishedAt *time.Time `json:"finished_at"`
 		Name       string     `json:"name"`
 		Aps        []AP       `json:"aps" gorm:"many2many:job_aps"`
-		//TODO: Clients
-		Hosts    []Host    `json:"hosts" gorm:"many2many:job_hosts"`
-		Networks []Network `json:"networks" gorm:"many2many:job_networks"`
+		Clients    []Client   `json:"clients" gorm:"many2many:job_clients"`
+		Hosts      []Host     `json:"hosts" gorm:"many2many:job_hosts"`
+		Networks   []Network  `json:"networks" gorm:"many2many:job_networks"`
 	}
 )
 
