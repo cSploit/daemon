@@ -23,8 +23,10 @@ type AP struct {
 	Essid   string `json:"essid"`
 	Key     string `json:"key"`
 	//Wps     bool   `json:"wps"`
-	//TODO: discovered_on []Iface -> use this to known if this AP is reachable by multiple adapters
-	Jobs []Job `json:"-" gorm:"many2many:job_aps;"`
+
+	Iface   Iface `json:"-"`
+	IfaceId uint  `json:"-"`
+	Jobs    []Job `json:"-" gorm:"many2many:job_aps;"`
 }
 
 // DEAUTH infinitely the AP using broadcast address

@@ -12,5 +12,7 @@ type Client struct {
 	Bssid   string `json:"bssid"`
 	Probed  string `json:"probed_essids"`
 
-	Jobs []Job `json:"-" gorm:"many2many:job_clients"`
+	Iface   Iface `json:"-"`
+	IfaceId uint  `json:"-"`
+	Jobs    []Job `json:"-" gorm:"many2many:job_clients"`
 }
