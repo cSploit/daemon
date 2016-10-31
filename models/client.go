@@ -2,9 +2,6 @@ package models
 
 import (
 	"github.com/cSploit/daemon/models/internal"
-	"github.com/cSploit/daemon/tools/aircrack/attacks"
-	"os/exec"
-	"time"
 )
 
 // A wifi client ( courtesy of aircrack )
@@ -23,22 +20,15 @@ type Client struct {
 }
 
 // DEAUTH infinitely the Client
-func (c *Client) Deauth(iface string) (attacks.Attack, error) {
-	cmd := exec.Command("aireplay-ng", "-0", "0", "-a", c.Station, "-d", c.Bssid, iface)
+func (c *Client) Deauth() (j Job, e error) {
+	pj, e := CreateProcessJob("aireplay-ng", "-0", "0", "-a", c.Station, "-d", c.Bssid, c.Iface.Name)
 
-	err := cmd.Start() // Do not wait
-
-	cur_atk := attacks.Attack{
-		Type:    "Deauth",
-		Target:  c.Bssid,
-		Running: false,
-		Started: time.Now().String(),
+	if e != nil {
+		j = pj.Job
+		internal.Db.Model(&j).Update("Name", "Deauth ["+c.Station+"]")
+		internal.Db.Model(&j).Association("job_clients").Append(c)
+		internal.Db.Model(&j).Association("job_ifaces").Append(&(c.Iface))
 	}
 
-	if err != nil {
-		cur_atk.Running = true
-		cur_atk.Init(cmd.Process)
-	}
-
-	return cur_atk, err
+	return
 }

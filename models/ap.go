@@ -2,11 +2,8 @@ package models
 
 import (
 	"github.com/cSploit/daemon/models/internal"
-	"github.com/cSploit/daemon/tools/aircrack/attacks"
 	"os"
-	"os/exec"
 	"strconv"
-	"time"
 )
 
 func init() {
@@ -37,8 +34,8 @@ type AP struct {
 }
 
 // DEAUTH infinitely the AP using broadcast address
-func (a *AP) Deauth(iface string) (j Job, e error) {
-	pj, e := CreateProcessJob("aireplay-ng", "-0", "0", "-a", a.Bssid, iface)
+func (a *AP) Deauth() (j Job, e error) {
+	pj, e := CreateProcessJob("aireplay-ng", "-0", "0", "-a", a.Bssid, a.Iface.Name)
 
 	if e == nil {
 		j = pj.Job
@@ -51,8 +48,8 @@ func (a *AP) Deauth(iface string) (j Job, e error) {
 }
 
 // Try a fake auth on the ap
-func (a *AP) FakeAuth(iface string) (j Job, e error) {
-	pj, e := CreateProcessJob("aireplay-ng", "-1", "0", "-a", a.Bssid, "-T", "1", iface)
+func (a *AP) FakeAuth() (j Job, e error) {
+	pj, e := CreateProcessJob("aireplay-ng", "-1", "0", "-a", a.Bssid, "-T", "1", a.Iface.Name)
 
 	if e == nil {
 		j = pj.Job
@@ -65,57 +62,45 @@ func (a *AP) FakeAuth(iface string) (j Job, e error) {
 }
 
 // ARP replay!!
-func (a *AP) ArpReplay(iface string) (attacks.Attack, error) {
-	cmd := exec.Command("aireplay-ng", "-3", "-a", a.Bssid, iface)
+func (a *AP) ArpReplay(iface string) (j Job, e error) {
+	pj, e := CreateProcessJob("aireplay-ng", "-3", "-a", a.Bssid, a.Iface.Name)
 
-	err := cmd.Start() // Do not wait
-
-	cur_atk := attacks.Attack{
-		Type:    "ArpReplay",
-		Target:  a.Bssid,
-		Running: false,
-		Started: time.Now().String(),
+	if e == nil {
+		j = pj.Job
+		db := internal.Db
+		db.Model(&j).Update("Name", "ArpReplay ["+a.Bssid+"]")
+		db.Model(&j).Association("Aps").Append(a)
 	}
 
-	if err != nil {
-		cur_atk.Running = true
-		cur_atk.Init(cmd.Process)
-	}
-
-	return cur_atk, err
+	return
 }
 
 var captures_nb = 0
 
 // Start a capture process
-func (a *AP) Capture(iface string) (attacks.Attack, string, error) {
+func (a *AP) Capture() (j Job, e error) {
 	path := "go-wifi_capture-" + strconv.Itoa(captures_nb)
 	captures_nb += 1
 
 	// Make a specific dir so we do not mix captures
-	// TODO: change mode
-	err := os.Mkdir(path, 766)
-	if err == nil {
-		return nil, nil, err
-	}
-
-	path += "go-wifi"
-	cmd := exec.Command("airodump-ng", "--write", path, "-c", a.Channel, "--output-format", "pcap", "--bssid", a.Bssid, iface)
-
-	err = cmd.Start() // Do not wait
-
-	cur_atk := attacks.Attack{
-		Type:    "Capture",
-		Target:  a.Bssid,
-		Running: false,
-		Started: time.Now().String(),
-	}
-
+	err := os.Mkdir(path, 0755)
 	if err != nil {
-		cur_atk.Running = true
-		cur_atk.Init(cmd.Process)
+		log.Error(err)
 	}
 
-	// Because of an import cycle, we cannot build the Capture object, we just return the dir's path
-	return cur_atk, path, err
+	path += "/go-wifi"
+	pj, e := CreateProcessJob("airodump-ng", "--write", path, "-c", a.Channel, "--output-format", "pcap", "--bssid", a.Bssid, a.Iface.Name)
+
+	if e == nil {
+		j = pj.Job
+		db := internal.Db
+		db.Model(&j).Update("Name", "Capture ["+a.Bssid+"]")
+		db.Model(&j).Association("Aps").Append(a)
+
+		//TODO: start a routine that update the Capture record
+		capture := &Capture{Ap: a, ApId: a.ID, File: path + "-01.pcap"}
+		db.Save(capture)
+	}
+
+	return
 }
