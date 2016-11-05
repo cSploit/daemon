@@ -90,7 +90,7 @@ func runCommand(pj ProcessJob, cmd *exec.Cmd) {
 
 	err := cmd.Wait()
 	end := time.Now()
-	db := internal.Db.Begin()
+	db := internal.Db
 
 	log.Debugf("process %v exited: err=%v", pj, err)
 
@@ -108,10 +108,6 @@ func runCommand(pj ProcessJob, cmd *exec.Cmd) {
 	}
 
 	if err := db.Model(&pj.Job).Update("FinishedAt", &end).Error; err != nil {
-		log.Error(err)
-	}
-
-	if err := db.Commit().Error; err != nil {
 		log.Error(err)
 	}
 
