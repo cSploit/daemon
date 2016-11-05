@@ -19,9 +19,7 @@ package config
 
 import (
 	"encoding/json"
-	"github.com/op/go-logging"
 	"io/ioutil"
-	"os"
 )
 
 type DbConfig struct {
@@ -35,23 +33,18 @@ type Config struct {
 
 // global configuration object
 var Conf Config
-var logger *logging.Logger = logging.MustGetLogger("config")
 
-func init() {
-	fpath := "./config.json"
+func Load(fpath string) error {
+	var content []byte
+	var err error
 
-	if envPath := os.Getenv("CSPLOIT_CONFIG"); envPath != "" {
-		fpath = envPath
+	if content, err = ioutil.ReadFile(fpath); err != nil {
+		return err
 	}
 
-	config_file, err := ioutil.ReadFile(fpath)
-	if err != nil {
-		logger.Fatal("config file not found", err)
+	if err = json.Unmarshal(content, &Conf); err != nil {
+		return err
 	}
 
-	err = json.Unmarshal(config_file, &Conf)
-
-	if err != nil {
-		logger.Fatal("config format error", err)
-	}
+	return nil
 }
