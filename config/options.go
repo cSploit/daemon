@@ -1,13 +1,15 @@
-package main
+package config
 
-import "flag"
-import "github.com/ianschenck/envflag"
+import (
+	"flag"
+	"github.com/ianschenck/envflag"
+)
 
 var configPath string
 
 func init() {
 	const (
-		configPathDefault = "./config.json"
+		configPathDefault = "config.json"
 		configPathUsage   = "path to config file"
 	)
 

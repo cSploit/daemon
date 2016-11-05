@@ -34,7 +34,7 @@ type Config struct {
 // global configuration object
 var Conf Config
 
-func Load(fpath string) error {
+func LoadFrom(fpath string) error {
 	var content []byte
 	var err error
 
@@ -47,4 +47,8 @@ func Load(fpath string) error {
 	}
 
 	return nil
+}
+
+func Load() error {
+	return LoadFrom(configPath)
 }

@@ -4,12 +4,14 @@ import (
 	"github.com/cSploit/daemon/config"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	"sync"
 )
 
 var (
 	Db          *gorm.DB
 	models      []interface{}
 	join_tables []string
+	once        sync.Once
 )
 
 func OpenDb() error {
@@ -50,12 +52,15 @@ func ClearDb() {
 }
 
 func OpenDbForTests() {
-	if Db == nil {
+	once.Do(func() {
+		if err := config.Load(); err != nil {
+			panic(err)
+		}
+
 		if err := openDb(true); err != nil {
 			panic(err)
 		}
-	}
-	ClearDb()
+	})
 }
 
 func RegisterModels(model ...interface{}) {

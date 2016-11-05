@@ -89,7 +89,7 @@ func main() {
 	flag.Parse()
 	envflag.Parse()
 
-	if err := config.Load(configPath); err != nil {
+	if err := config.Load(); err != nil {
 		panic(err)
 	}
 

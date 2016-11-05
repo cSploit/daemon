@@ -2,15 +2,15 @@ package models
 
 import (
 	"github.com/cSploit/daemon/models/internal"
+	"github.com/ianschenck/envflag"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
 
-func init() {
-	internal.OpenDbForTests()
-}
-
 func TestCreateProcessJob(t *testing.T) {
+	envflag.Parse()
+	internal.OpenDbForTests()
+
 	pj, err := CreateProcessJob("date")
 
 	require.Nil(t, err)
@@ -19,6 +19,9 @@ func TestCreateProcessJob(t *testing.T) {
 }
 
 func TestFindProcessJob(t *testing.T) {
+	envflag.Parse()
+	internal.OpenDbForTests()
+
 	pj, _ := CreateProcessJob("date")
 
 	pj1, err := FindProcessJob(pj.JobId)
@@ -33,6 +36,9 @@ func TestFindProcessJob(t *testing.T) {
 }
 
 func TestProcessOutput(t *testing.T) {
+	envflag.Parse()
+	internal.OpenDbForTests()
+
 	pj, _ := CreateProcessJob("date")
 
 	cmd := commands[pj.JobId]
