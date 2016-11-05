@@ -19,8 +19,9 @@ package config
 
 import (
 	"encoding/json"
-	"fmt"
+	"github.com/op/go-logging"
 	"io/ioutil"
+	"os"
 )
 
 type DbConfig struct {
@@ -34,12 +35,23 @@ type Config struct {
 
 // global configuration object
 var Conf Config
+var logger *logging.Logger = logging.MustGetLogger("config")
 
 func init() {
-	config_file, err := ioutil.ReadFile("./config.json")
+	fpath := "./config.json"
+
+	if envPath := os.Getenv("CSPLOIT_CONFIG"); envPath != "" {
+		fpath = envPath
+	}
+
+	config_file, err := ioutil.ReadFile(fpath)
 	if err != nil {
-		fmt.Printf("File error: %v\n", err)
-	} else {
-		json.Unmarshal(config_file, &Conf)
+		logger.Fatal("config file not found", err)
+	}
+
+	err = json.Unmarshal(config_file, &Conf)
+
+	if err != nil {
+		logger.Fatal("config format error", err)
 	}
 }

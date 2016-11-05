@@ -20,9 +20,14 @@ package models
 import (
 	"errors"
 	netHelper "github.com/cSploit/daemon/helpers/net"
+	"github.com/cSploit/daemon/models/internal"
 	"github.com/lair-framework/go-nmap"
 	"net"
 )
+
+func init() {
+	internal.RegisterModels(&HwAddr{})
+}
 
 type HwAddr struct {
 	ID       uint

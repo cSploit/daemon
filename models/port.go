@@ -18,8 +18,13 @@
 package models
 
 import (
+	"github.com/cSploit/daemon/models/internal"
 	"github.com/lair-framework/go-nmap"
 )
+
+func init() {
+	internal.RegisterModels(&Port{})
+}
 
 type Port struct {
 	ID       uint     `json:"id"`
