@@ -4,6 +4,7 @@ import (
 	"github.com/cSploit/daemon/models/internal"
 	"os"
 	"strconv"
+	"time"
 )
 
 func init() {
@@ -13,19 +14,21 @@ func init() {
 // Access Point ( courtesy of aircrack )
 type AP struct {
 	internal.Base
-	Bssid   string `json:"bssid"`
-	Channel int    `json:"channel"`
-	Speed   int    `json:"speed"`
-	Privacy string `json:"privacy"`
-	Cipher  string `json:"cipher"`
-	Auth    string `json:"auth"`
-	Power   int    `json:"power"`
-	Beacons int    `json:"beacons"`
-	IVs     int    `json:"ivs"`
-	Lan     string `json:"lan_ip"`
-	IdLen   int    `json:"id_len"`
-	Essid   string `json:"essid"`
-	Key     string `json:"key"`
+	Bssid   string    `json:"bssid"`
+	First   time.Time `json:"first_seen"`
+	Last    time.Time `json:"last_seen"`
+	Channel int       `json:"channel"`
+	Speed   int       `json:"speed"`
+	Privacy string    `json:"privacy"`
+	Cipher  string    `json:"cipher"`
+	Auth    string    `json:"auth"`
+	Power   int       `json:"power"`
+	Beacons int       `json:"beacons"`
+	IVs     int       `json:"ivs"`
+	Lan     string    `json:"lan_ip"`
+	IdLen   int       `json:"id_len"`
+	Essid   string    `json:"essid"`
+	Key     string    `json:"key"`
 	//Wps     bool   `json:"wps"`
 
 	Iface   Iface `json:"-"`
@@ -89,7 +92,8 @@ func (a *AP) Capture() (j Job, e error) {
 	}
 
 	path += "/go-wifi"
-	pj, e := CreateProcessJob("airodump-ng", "--write", path, "-c", a.Channel, "--output-format", "pcap", "--bssid", a.Bssid, a.Iface.Name)
+	ch := strconv.Itoa(a.Channel)
+	pj, e := CreateProcessJob("airodump-ng", "--write", path, "-c", ch, "--output-format", "pcap", "--bssid", a.Bssid, a.Iface.Name)
 
 	if e == nil {
 		j = pj.Job
@@ -98,9 +102,21 @@ func (a *AP) Capture() (j Job, e error) {
 		db.Model(&j).Association("Aps").Append(a)
 
 		//TODO: start a routine that update the Capture record
-		capture := &Capture{Ap: a, ApId: a.ID, File: path + "-01.pcap"}
+		capture := &Capture{Ap: *a, ApId: a.ID, File: path + "-01.pcap"}
 		db.Save(capture)
 	}
 
+	return
+}
+
+func FindAp(id uint) (a *AP, e error) {
+	a = &AP{}
+	e = internal.Db.Find(a, id).Error
+	return
+}
+
+func FindApByBssid(bssid string) (a *AP, e error) {
+	a = &AP{}
+	e = internal.Db.Where("bssid = ?", bssid).Find(a).Error
 	return
 }

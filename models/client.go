@@ -2,17 +2,20 @@ package models
 
 import (
 	"github.com/cSploit/daemon/models/internal"
+	"time"
 )
 
 // A wifi client ( courtesy of aircrack )
 type Client struct {
 	internal.Base
 	// MAC address
-	Station string `json:"station"`
-	Power   int    `json:"power"`
-	Packets int    `json:"packets"`
-	Bssid   string `json:"bssid"`
-	Probed  string `json:"probed_essids"`
+	First   time.Time `json:"first_seen"`
+	Last    time.Time `json:"last_seen"`
+	Station string    `json:"station"`
+	Power   int       `json:"power"`
+	Packets int       `json:"packets"`
+	Bssid   string    `json:"bssid"`
+	Probed  string    `json:"probed_essids"`
 
 	Iface   Iface `json:"-"`
 	IfaceId uint  `json:"-"`
@@ -30,5 +33,17 @@ func (c *Client) Deauth() (j Job, e error) {
 		internal.Db.Model(&j).Association("job_ifaces").Append(&(c.Iface))
 	}
 
+	return
+}
+
+func FindClient(id uint) (c *Client, e error) {
+	c = &Client{}
+	e = internal.Db.Find(c, id).Error
+	return
+}
+
+func FindClientByMac(mac_addr string) (c *Client, e error) {
+	c = &Client{}
+	e = internal.Db.Where("station = ?", mac_addr).Find(c).Error
 	return
 }
