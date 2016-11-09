@@ -3,6 +3,7 @@ package models
 import (
 	"github.com/cSploit/daemon/models/internal"
 	"io/ioutil"
+	"net"
 	"os"
 )
 
@@ -39,5 +40,23 @@ func (iface *Iface) StartDiscovery() (d *DiscoveryJob, e error) {
 	d.Job = pj.Job
 
 	e = internal.Db.Save(d).Error
+	return
+}
+
+func FindIface(id uint) (i *Iface, e error) {
+	i = &Iface{}
+	e = internal.Db.Find(i, id).Error
+	return
+}
+
+func FindIfaceByName(name string) (i *Iface, e error) {
+	i = &Iface{}
+	e = internal.Db.Where("name = ?", name).Find(i).Error
+	return
+}
+
+func CreateIface(iface net.Interface) (i *Iface, e error) {
+	i = &Iface{Name: iface.Name}
+	e = internal.Db.Save(i).Error
 	return
 }
