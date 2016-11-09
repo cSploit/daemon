@@ -7,7 +7,7 @@ import (
 
 func init() {
 	internal.RegisterModels(&Job{})
-	internal.RegisterJoinTables("job_hosts", "job_aps", "job_networks", "job_clients")
+	internal.RegisterJoinTables("job_hosts", "job_aps", "job_networks", "job_clients", "job_ifaces")
 }
 
 type (
@@ -19,6 +19,7 @@ type (
 		Clients    []Client   `json:"clients" gorm:"many2many:job_clients"`
 		Hosts      []Host     `json:"hosts" gorm:"many2many:job_hosts"`
 		Networks   []Network  `json:"networks" gorm:"many2many:job_networks"`
+		Ifaces     []Iface    `json:"ifaces" gorm:"many2many:job_ifaces"`
 	}
 )
 
