@@ -16,7 +16,6 @@ type (
 
 		Key        *string `json:"key"`
 		Handshake bool     `json:"has_handshake"`
-		IVs        int     `json:"ivs"`
 		//Cracking   bool    `json:"cracking"`
 		File       string  `json:"-"`
 
@@ -40,8 +39,6 @@ func (c *Capture) Init(path_to_captures string) {
 	if c.Ap.Privacy == "WPA" || c.Ap.Privacy == "WPA2" {
 		c.checkForHandshake()
 	}
-
-	c.getIVs()
 }
 
 // Return succesfull key
@@ -177,9 +174,4 @@ func (c *Capture) checkForHandshake() {
 
 	// Delete file
 	os.Remove(path)
-}
-
-func (c *Capture) getIVs() {
-	// TODO: count ivs!
-	c.IVs = nil
 }
