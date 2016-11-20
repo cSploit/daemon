@@ -5,119 +5,92 @@ import (
 	"time"
 	"strings"
 	"os"
+	"io/ioutil"
 )
 
 //TODO: turn it into tcpdump capture, with a field which specify the physical medium type ( 802.11 or Ethernet )
 //TODO: Handshake entity { nonce, hmac, ... }
-//TODO: WpaKey entity { Ap, Handshake, Key }
-//TODO: WepCrackJob { Capture, Handshake, Ap }
+
+// TODO: IVs
 
 // TODO: trying keys jobs
 
 // an airodump capture file
-type (
-	Capture struct {
-		internal.Base
+type Capture struct {
+	internal.Base
 
-		Key        *string `json:"key"`
-		Handshake bool     `json:"has_handshake"`
-		//Cracking   bool    `json:"cracking"`
-		File       string  `json:"-"`
+	Key        *string `json:"key"`
+	Handshake bool     `json:"has_handshake"`
+	Cracking   bool    `json:"cracking"`
+	File       string  `json:"-"`
 
-		Dict string `json:"dict"`
+	Dict string `json:"dict"`
 
-		Ap   AP   `json:"-"`
-		ApId uint `json:"ap_id"`
-	}
-
-	Target struct {
-		Bssid string `json:"bssid"`
-		Essid string `json:"essid"`
-		// WPA, WPA2, WEP, OPN
-		Privacy string `json:"privacy"`
-	}
-)
-
-func (c *Capture) AttemptToCrack () {
-	go c.crack(c.Dict)
+	Ap   AP   `json:"-"`
+	ApId uint `json:"ap_id"`
 }
 
+var key_nb int
+
 // Return ascii key; if cracking WEP dict can be null
-func (c *Capture) crack(dict string) {
+func (c *Capture) Crack() (j Job, e error) {
 	// Do not crack a second time!
 	if c.Key != nil {
 		return
 	}
 
-	// Start here
-	var key string
+	c.Cracking = true
 
 	if (c.Ap.Privacy == "WPA" || c.Ap.Privacy == "WPA2") && dict != nil {
-		key = c.crackWPA(dict)
+		j, e = c.crackWPA()
 	} else if c.Ap.Privacy == "WEP" {
-		key = c.crackWEP()
-	} else {
-		key = nil
-	}
-
-	if key != nil {
-		c.Key = key
+		j, e = c.crackWEP()
 	}
 }
 
-func (c *Capture) crackWPA(dict string) string {
-	// I use a random file so you can run the func in parallel
-	path_to_key := os.TempDir() + "go-wifi_key" + strconv.Itoa(rand.Uint32())
+func (c *Capture) crackWPA() (j Job, e error) {
+	path_to_key := os.TempDir() + "go-wifi_key" + strconv.Itoa(key_nb)
+	key_nb += 1
 
-	// If the file exist, delete it
-	os.Remove(path_to_key)
+	pj, e := CreateProcessJob("aircrack-ng", "-a", "2", "-l", path_to_key, "-w", c.Dict, "-b", c.Ap.Bssid, c.File)
 
-	cmd := exec.Command("aircrack-ng", "-a", "2", "-l", path_to_key, "-w", dict, "-b", c.Ap.Bssid, c.File)
-	cmd.Run()
-
-	// Wait termination so we can get the key
-	cmd.Wait()
-
-	key_buf, err := ioutil.ReadFile(path_to_key)
-	if err != nil {
-		// no key found
-		return nil
+	if e == nil {
+		j = pj.Job
+		db := internal.Db
+		db.Model(&j).Update("Name", "CrackWpa ["+c.Ap.Bssid+"]")
+		db.Model(&j).Association("Aps").Append(a)
 	}
 
-	return string(key_buf)
+	go c.waitWpa(pj, path_to_key)
 }
 
-func (c *Capture) crackWEP() string {
-	// Start with PTW
-	// I use a random file so you can run the func in parallel
-	path_to_key := os.TempDir() + "go-wifi_key" + strconv.Itoa(rand.Uint32())
+func (c *Capture) crackWEP() (j Job, e error) {
+	path_to_key := os.TempDir() + "go-wifi_key" + strconv.Itoa(key_nb)
+	key_nb += 1
 
-	// If the file exist, delete it
-	os.Remove(path_to_key)
+	pj, e := CreateProcessJob("aircrack-ng", "-D", "-z", "-a", "1", "-l", path_to_key, "-b", c.Ap.Bssid, c.File)
 
-	cmd := exec.Command("aircrack-ng", "-D", "-z", "-a", "1", "-l", path_to_key, "-b", c.Ap.Bssid, c.File)
-	cmd.Run()
-
-	// Wait termination so we can get the key
-	cmd.Wait()
-
-	// Check if we succeed
-	key_buf, err := ioutil.ReadFile(path_to_key)
-	if err != nil {
-		// no key found, start Korek
-		cmd = exec.Command("aircrack-ng", "-D", "-K", "-a", "1", "-l", path_to_key, "-b", c.Ap.Bssid, c.File)
-		cmd.Run()
-		cmd.Wait()
-
-		key_buf, err = ioutil.ReadFile(path_to_key)
-		if err != nil {
-			// Korek and PTW failed, exit
-			return nil
-		}
+	if e == nil {
+		j = pj.Job
+		db := internal.Db
+		db.Model(&j).Update("Name", "CrackWep ["+c.Ap.Bssid+"]")
+		db.Model(&j).Association("Aps").Append(a)
 	}
 
-	// key_buf has a key!
-	return string(key_buf)
+	go c.waitCrack(pj, path_to_key)
+}
+
+func (c *Capture) waitCrack(pj ProcessJob, path_to_key string) {
+	while pj.ExitStatus == nil {
+		time.Sleep(time.Second * 1)
+	}
+
+	key_buff, err := ioutil.ReadFile(path_to_key)
+	if err == nil {
+		c.Key = string(key_buff)
+	}
+
+	c.Cracking = false
 }
 
 func (c *Capture) CheckForHandshake() (j Job, e error){
@@ -139,7 +112,7 @@ func (c *Capture) CheckForHandshake() (j Job, e error){
 	if e == nil {
 		j = pj.Job
 		db := internal.Db
-		db.Model(&j).Update("Name", "CheckHandshake ["+a.Bssid+"]")
+		db.Model(&j).Update("Name", "CheckHandshake ["+c.Ap.Bssid+"]")
 		db.Model(&j).Association("Aps").Append(a)
 	}
 
