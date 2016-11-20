@@ -2,10 +2,10 @@ package models
 
 import (
 	"github.com/cSploit/daemon/models/internal"
-	"time"
-	"strings"
-	"os"
 	"io/ioutil"
+	"os"
+	"strings"
+	"time"
 )
 
 //TODO: turn it into tcpdump capture, with a field which specify the physical medium type ( 802.11 or Ethernet )
@@ -19,10 +19,10 @@ import (
 type Capture struct {
 	internal.Base
 
-	Key        *string `json:"key"`
-	Handshake bool     `json:"has_handshake"`
-	Cracking   bool    `json:"cracking"`
-	File       string  `json:"-"`
+	Key       *string `json:"key"`
+	Handshake bool    `json:"has_handshake"`
+	Cracking  bool    `json:"cracking"`
+	File      string  `json:"-"`
 
 	Dict string `json:"dict"`
 
@@ -81,8 +81,10 @@ func (c *Capture) crackWEP() (j Job, e error) {
 }
 
 func (c *Capture) waitCrack(pj ProcessJob, path_to_key string) {
-	while pj.ExitStatus == nil {
-		time.Sleep(time.Second * 1)
+	for {
+		if pj.ExitStatus == nil {
+			time.Sleep(time.Second * 1)
+		}
 	}
 
 	key_buff, err := ioutil.ReadFile(path_to_key)
@@ -93,7 +95,7 @@ func (c *Capture) waitCrack(pj ProcessJob, path_to_key string) {
 	c.Cracking = false
 }
 
-func (c *Capture) CheckForHandshake() (j Job, e error){
+func (c *Capture) CheckForHandshake() (j Job, e error) {
 	// Thank you wifite (l. 2478, has_handshake_aircrack)
 	// build a temp dict
 	path := os.TempDir() + "fake-dict"
@@ -107,7 +109,7 @@ func (c *Capture) CheckForHandshake() (j Job, e error){
 
 	file.WriteString("that_is_a_fake_key_no_one_will_use")
 
-	pj, e := CreateProcessJob("aircrack-ng",  "-a", "2", "-w", path, "-b", c.Ap.Bssid, c.File)
+	pj, e := CreateProcessJob("aircrack-ng", "-a", "2", "-w", path, "-b", c.Ap.Bssid, c.File)
 
 	if e == nil {
 		j = pj.Job
@@ -120,8 +122,10 @@ func (c *Capture) CheckForHandshake() (j Job, e error){
 }
 
 func (c *Capture) waitHandshakeTester(pj ProcessJob, file os.File) {
-	while pj.ExitStatus == nil {
-		time.Sleep(time.Second * 1)
+	for {
+		if pj.ExitStatus == nil {
+			time.Sleep(time.Second * 1)
+		}
 	}
 
 	if strings.Contains(pj.Output, "Passphrase not in dictionary") {
