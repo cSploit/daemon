@@ -1,13 +1,18 @@
 package models
 
-import "github.com/cSploit/daemon/models/internal"
+import (
+	"github.com/cSploit/daemon/models/internal"
+	"time"
+	"strings"
+	"os"
+)
 
 //TODO: turn it into tcpdump capture, with a field which specify the physical medium type ( 802.11 or Ethernet )
 //TODO: Handshake entity { nonce, hmac, ... }
 //TODO: WpaKey entity { Ap, Handshake, Key }
 //TODO: WepCrackJob { Capture, Handshake, Ap }
 
-// TODO: make cracking and trying keys jobs
+// TODO: trying keys jobs
 
 // an airodump capture file
 type (
@@ -18,6 +23,8 @@ type (
 		Handshake bool     `json:"has_handshake"`
 		//Cracking   bool    `json:"cracking"`
 		File       string  `json:"-"`
+
+		Dict string `json:"dict"`
 
 		Ap   AP   `json:"-"`
 		ApId uint `json:"ap_id"`
@@ -31,46 +38,15 @@ type (
 	}
 )
 
-// Build the struct thanks to the dir (with .pcap and .csv) path
-func (c *Capture) Init(path_to_captures string) {
-	c.File = path_to_captures + "go-wifi-01.cap"
-
-	// Check if we have an Handshake
-	if c.Ap.Privacy == "WPA" || c.Ap.Privacy == "WPA2" {
-		c.checkForHandshake()
-	}
-}
-
-// Return succesfull key
-func (c *Capture) TryKeys(keys ...string) string {
-	if c.Ap.Privacy == "WEP" || c.Ap.Privacy == "OPN" {
-		// Only wpa
-		return nil
-	}
-
-	// build a temp dict
-	path := os.TempDir() + "go-wifi-tmp-dict"
-
-	file, err := os.Create(path)
-	if err != nil {
-		// Got an error, exit
-		return
-	}
-	defer file.Close()
-	defer os.Remove(path)
-
-	for _, key := range keys {
-		file.WriteString(key + "\n")
-	}
-
-	return c.crackWPA(path)
+func (c *Capture) AttemptToCrack () {
+	go c.crack(c.Dict)
 }
 
 // Return ascii key; if cracking WEP dict can be null
-func (c *Capture) AttemptToCrack(dict string) string {
+func (c *Capture) crack(dict string) {
 	// Do not crack a second time!
 	if c.Key != nil {
-		return c.Key
+		return
 	}
 
 	// Start here
@@ -87,8 +63,6 @@ func (c *Capture) AttemptToCrack(dict string) string {
 	if key != nil {
 		c.Key = key
 	}
-
-	return key
 }
 
 func (c *Capture) crackWPA(dict string) string {
@@ -146,13 +120,13 @@ func (c *Capture) crackWEP() string {
 	return string(key_buf)
 }
 
-func (c *Capture) checkForHandshake() {
+func (c *Capture) CheckForHandshake() (j Job, e error){
 	// Thank you wifite (l. 2478, has_handshake_aircrack)
 	// build a temp dict
 	path := os.TempDir() + "fake-dict"
 
-	file, err := os.Create(path)
-	if err != nil {
+	file, e := os.Create(path)
+	if e != nil {
 		// Got an error, exit
 		return
 	}
@@ -160,18 +134,28 @@ func (c *Capture) checkForHandshake() {
 
 	file.WriteString("that_is_a_fake_key_no_one_will_use")
 
-	cmd := exec.Command("aircrack-ng",  "-a", "2", "-w", path, "-b", c.Ap.Bssid, c.File)
+	pj, e := CreateProcessJob("aircrack-ng",  "-a", "2", "-w", path, "-b", c.Ap.Bssid, c.File)
 
-	ouptut, err2 := cmd.Output()
-
-	if err2 == nil {
-		if strings.Contains(string(ouptut), "Passphrase not in dictionary") {
-			c.Handshake = true
-		} else {
-			c.Handshake = false
-		}
+	if e == nil {
+		j = pj.Job
+		db := internal.Db
+		db.Model(&j).Update("Name", "CheckHandshake ["+a.Bssid+"]")
+		db.Model(&j).Association("Aps").Append(a)
 	}
 
-	// Delete file
-	os.Remove(path)
+	go c.waitHandshakeTester(pj, file)
+}
+
+func (c *Capture) waitHandshakeTester(pj ProcessJob, file os.File) {
+	while pj.ExitStatus == nil {
+		time.Sleep(time.Second * 1)
+	}
+
+	if strings.Contains(pj.Output, "Passphrase not in dictionary") {
+		c.Handshake = true
+	} else {
+		c.Handshake = false
+	}
+
+	os.Remove(file)
 }
