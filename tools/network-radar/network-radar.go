@@ -32,9 +32,10 @@ var (
 
 type NetworkRadar struct {
 	Passive   bool
+	Iface     *net.Interface
 	Addresses []net.Addr
 	ctx       context.Context
-	cancel    context.CancelFunc
+	Cancel    context.CancelFunc
 }
 
 func (nr *NetworkRadar) startProbing() error {
@@ -42,7 +43,11 @@ func (nr *NetworkRadar) startProbing() error {
 	var skipLoopback bool
 
 	if len(nr.Addresses) == 0 {
-		nr.Addresses, lastErr = net.InterfaceAddrs()
+		if nr.Iface != nil {
+			nr.Addresses, lastErr = nr.Iface.Addrs()
+		} else {
+			nr.Addresses, lastErr = net.InterfaceAddrs()
+		}
 
 		if lastErr != nil {
 			return lastErr
@@ -92,7 +97,11 @@ func (nr *NetworkRadar) startProbing() error {
 }
 
 func (nr *NetworkRadar) Start() error {
-	nr.ctx, nr.cancel = context.WithCancel(context.Background())
+	nr.ctx, nr.Cancel = context.WithCancel(context.Background())
+
+	if nr.Iface != nil {
+		nr.ctx = ctxHelper.WithIface(nr.ctx, *(nr.Iface))
+	}
 
 	if err := startAnalyze(nr.ctx); err != nil {
 		return err
@@ -100,7 +109,7 @@ func (nr *NetworkRadar) Start() error {
 
 	if !nr.Passive {
 		if err := nr.startProbing(); err != nil {
-			nr.cancel()
+			nr.Cancel()
 			return err
 		}
 	}
