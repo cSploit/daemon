@@ -25,14 +25,21 @@ import (
 
 const idLabel = "id"
 
-func fetchId(c *gin.Context, entityName string, id *uint64) error {
-	res, err := strconv.ParseUint(c.Param(entityName+"_"+idLabel), 10, 64)
-
-	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
-		return err
+func fetchId(c *gin.Context, entityName string, id *uint64) (e error) {
+	if e = getId(c, entityName, id); e != nil {
+		c.AbortWithError(http.StatusBadRequest, e)
 	}
 
-	*id = res
-	return nil
+	return
+}
+
+func getId(c *gin.Context, entityName string, id *uint64) (e error) {
+	var s string
+	var i uint64
+	if s, e = c.Params.Get(entityName + "_" + idLabel); e == nil {
+		if i, e = strconv.ParseUint(s, 10, 64); e == nil {
+			*id = i
+		}
+	}
+	return
 }
