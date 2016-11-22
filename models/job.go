@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql/driver"
 	"github.com/cSploit/daemon/models/internal"
 	"time"
 )
@@ -11,17 +12,61 @@ func init() {
 }
 
 type (
+	JobKind int64
+
+	// A running task
 	Job struct {
 		internal.Base
 		FinishedAt *time.Time `json:"finished_at"`
 		Name       string     `json:"name"`
-		Aps        []AP       `json:"aps" gorm:"many2many:job_aps"`
-		Clients    []Client   `json:"clients" gorm:"many2many:job_clients"`
-		Hosts      []Host     `json:"hosts" gorm:"many2many:job_hosts"`
-		Networks   []Network  `json:"networks" gorm:"many2many:job_networks"`
-		Ifaces     []Iface    `json:"ifaces" gorm:"many2many:job_ifaces"`
+		Type       JobKind    `json:"type"`
+
+		// affected entities
+		Aps      []AP      `json:"-" gorm:"many2many:job_aps"`
+		Clients  []Client  `json:"-" gorm:"many2many:job_clients"`
+		Hosts    []Host    `json:"-" gorm:"many2many:job_hosts"`
+		Networks []Network `json:"-" gorm:"many2many:job_networks"`
+		Ifaces   []Iface   `json:"-" gorm:"many2many:job_ifaces"`
+
+		// concrete jobs
+		Radar   *RadarJob   `json:"-"`
+		Process *ProcessJob `json:"-"`
+		//TODO: DiscoveryJob, MonitorJob
 	}
 )
+
+var jobKindNames = map[JobKind]string{}
+
+func registerJobKind(kind JobKind, name string /*, ViewHandlerFunction*/) {
+	if _, ok := jobKindNames[kind]; ok {
+		panic("job kind already registered: " + name)
+	}
+	jobKindNames[kind] = name
+}
+
+func (k JobKind) String() string {
+	return jobKindNames[k]
+}
+
+// used for json serialization
+func (k JobKind) MarshalText() ([]byte, error) {
+	return []byte(k.String()), nil
+}
+
+// DB deserialization
+func (k *JobKind) Scan(value interface{}) error {
+	*k = JobKind(value.(int64))
+	return nil
+}
+
+// DB serialization
+func (k JobKind) Value() (driver.Value, error) {
+	return int64(k), nil
+}
+
+func (j *Job) Is(kind JobKind) bool {
+	return j.Type == kind
+}
 
 func FindJob(id uint) (j *Job, e error) {
 	j = &Job{}

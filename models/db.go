@@ -5,6 +5,6 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-func GetDbInstance() gorm.DB {
-	return *internal.Db
+func GetDbInstance() *gorm.DB {
+	return internal.Db
 }

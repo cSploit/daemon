@@ -27,8 +27,13 @@ type DbConfig struct {
 	Args    []interface{} `josn:"args"`
 }
 
+type ScanConfig struct {
+	Passive bool `json:"passive"`
+}
+
 type Config struct {
-	Db DbConfig `json:"db"`
+	Db   DbConfig   `json:"db"`
+	Scan ScanConfig `json:"scan"`
 }
 
 // global configuration object

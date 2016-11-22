@@ -12,7 +12,10 @@ import (
 
 func init() {
 	internal.RegisterModels(&ProcessJob{})
+	registerJobKind(ProcessJobKind, "process")
 }
+
+const ProcessJobKind JobKind = 1
 
 var commands = make(map[uint]*exec.Cmd)
 

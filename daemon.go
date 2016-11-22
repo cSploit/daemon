@@ -28,8 +28,10 @@ import (
 	"flag"
 	"github.com/cSploit/daemon/config"
 	"github.com/ianschenck/envflag"
+	"github.com/jinzhu/gorm"
 	"gopkg.in/guregu/null.v3"
 	"io/ioutil"
+	"net"
 	"os"
 )
 
@@ -85,6 +87,40 @@ func addSomeRemoteHost() {
 	db.Create(h2)
 }
 
+func startRadars() {
+	ifaces, err := net.Interfaces()
+
+	if err != nil {
+		panic(err)
+	}
+
+	for _, iface := range ifaces {
+		i, err := models.FindIfaceByName(iface.Name)
+
+		if err == gorm.ErrRecordNotFound {
+			i, err = models.CreateIface(iface)
+		}
+
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+
+		nr := network_radar.NetworkRadar{Iface: &iface, Passive: config.Conf.Scan.Passive}
+
+		if err := nr.Start(); err != nil {
+			log.Error(err)
+			continue
+		}
+
+		if job, err := controllers.IfaceScanz(i, &iface, config.Conf.Scan.Passive); err != nil {
+			log.Error(err)
+		} else {
+			log.Infof("NetworkRadar succesfully started on interface %s: job#%d", iface.Name, job.ID)
+		}
+	}
+}
+
 func main() {
 	flag.Parse()
 	envflag.Parse()
@@ -93,16 +129,16 @@ func main() {
 		panic(err)
 	}
 
-	var err = models.Setup()
-
-	if err != nil {
+	if err := models.Setup(); err != nil {
 		log.Fatalf("unable to setup model: %v", err)
 		panic("unable to setup model")
 	}
 
 	logging.SetBackend(logging.NewLogBackend(os.Stderr, "", 0))
 
-	err = loadScanFromFile("sample_nmap_out.xml")
+	startRadars()
+
+	err := loadScanFromFile("sample_nmap_out.xml")
 
 	if err != nil {
 		log.Errorf("Error loading nmap output: %v", err)
@@ -130,11 +166,12 @@ func main() {
 	{
 		controllers.NetworkController.Setup(networks)
 	}
-
-	nr := network_radar.NetworkRadar{}
-
-	if err := nr.Start(); err != nil {
-		log.Errorf("cannot start NetworkRadar: %v", err)
+	ifaces := router.Group("ifaces")
+	{
+		ic := controllers.IfaceController
+		ic.Setup(ifaces)
+		//TODO: gutron
+		ifaces.POST("scan", controllers.IfaceScan)
 	}
 
 	router.Run(":8080")

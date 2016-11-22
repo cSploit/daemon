@@ -18,6 +18,7 @@
 package controllers
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -34,12 +35,15 @@ func fetchId(c *gin.Context, entityName string, id *uint64) (e error) {
 }
 
 func getId(c *gin.Context, entityName string, id *uint64) (e error) {
-	var s string
 	var i uint64
-	if s, e = c.Params.Get(entityName + "_" + idLabel); e == nil {
+	path := entityName + "_" + idLabel
+
+	if s, exists := c.Params.Get(path); exists {
 		if i, e = strconv.ParseUint(s, 10, 64); e == nil {
 			*id = i
 		}
+	} else {
+		e = errors.New(path + " not found")
 	}
 	return
 }
