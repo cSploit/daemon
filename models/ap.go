@@ -33,7 +33,7 @@ type AP struct {
 	//Wps     bool   `json:"wps"`
 
 	// Does the fake auth succeed?
-	FakeAuth bool `json:"fake_auth"`
+	FakeAuthed bool `json:"fake_auth"`
 
 	Iface   Iface `json:"-"`
 	IfaceId uint  `json:"-"`
@@ -78,9 +78,9 @@ func (a *AP) checkFakeAuth(pj *ProcessJob) {
 	}
 
 	if strings.Contains(pj.Output, "Association successful") {
-		a.FakeAuth = true
+		a.FakeAuthed = true
 	} else {
-		a.FakeAuth = false
+		a.FakeAuthed = false
 	}
 }
 
