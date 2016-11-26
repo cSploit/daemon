@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"time"
+	"strings"
 )
 
 func init() {
@@ -30,6 +31,9 @@ type AP struct {
 	Essid   string    `json:"essid"`
 	Key     string    `json:"key"`
 	//Wps     bool   `json:"wps"`
+
+	// Does the fake auth succeed?
+	FakeAuth bool `json:"fake_auth"`
 
 	Iface   Iface `json:"-"`
 	IfaceId uint  `json:"-"`
@@ -61,7 +65,23 @@ func (a *AP) FakeAuth() (j Job, e error) {
 		db.Model(&j).Association("Aps").Append(a)
 	}
 
+	go a.checkFakeAuth(pj)
+
 	return
+}
+
+func (a *AP) checkFakeAuth(pj *ProcessJob) {
+	for {
+		if pj.ExitStatus == nil {
+			time.Sleep(time.Second * 1)
+		}
+	}
+
+	if strings.Contains(pj.Output, "Association successful") {
+		a.FakeAuth = true
+	} else {
+		a.FakeAuth = false
+	}
 }
 
 // ARP replay!!
