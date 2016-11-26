@@ -1,12 +1,12 @@
 package models
 
 import (
+	"errors"
 	"github.com/cSploit/daemon/models/internal"
 	"io/ioutil"
-	"errors"
 	"os"
-	"strings"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -22,9 +22,9 @@ type Capture struct {
 	internal.Base
 
 	Key       string `json:"key"`
-	Handshake bool    `json:"has_handshake"`
-	Cracking  bool    `json:"cracking"`
-	File      string  `json:"-"`
+	Handshake bool   `json:"has_handshake"`
+	Cracking  bool   `json:"cracking"`
+	File      string `json:"-"`
 
 	Dict string `json:"dict"`
 
@@ -44,7 +44,7 @@ func (c *Capture) Crack() (j Job, e error) {
 
 	c.Cracking = true
 
-	if (c.Ap.Privacy == "WPA" || c.Ap.Privacy == "WPA2") {
+	if c.Ap.Privacy == "WPA" || c.Ap.Privacy == "WPA2" {
 		if c.Dict != "" {
 			j, e = c.crackWPA()
 		} else {
