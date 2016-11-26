@@ -44,10 +44,16 @@ func (c *Capture) Crack() (j Job, e error) {
 
 	c.Cracking = true
 
-	if (c.Ap.Privacy == "WPA" || c.Ap.Privacy == "WPA2") && c.Dict != "" {
-		j, e = c.crackWPA()
+	if (c.Ap.Privacy == "WPA" || c.Ap.Privacy == "WPA2") {
+		if c.Dict != "" {
+			j, e = c.crackWPA()
+		} else {
+			e = errors.New("Dictionnary needed for WPA(2) attack")
+		}
 	} else if c.Ap.Privacy == "WEP" {
 		j, e = c.crackWEP()
+	} else {
+		e = errors.New("Target seems not to be encrypted")
 	}
 
 	return
