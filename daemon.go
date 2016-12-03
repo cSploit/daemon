@@ -25,6 +25,9 @@ import (
 	"github.com/lair-framework/go-nmap"
 	"github.com/op/go-logging"
 
+	"flag"
+	"github.com/cSploit/daemon/config"
+	"github.com/ianschenck/envflag"
 	"gopkg.in/guregu/null.v3"
 	"io/ioutil"
 	"os"
@@ -83,7 +86,13 @@ func addSomeRemoteHost() {
 }
 
 func main() {
-	//TODO: config.readConfig(...) [ from argv ]
+	flag.Parse()
+	envflag.Parse()
+
+	if err := config.Load(); err != nil {
+		panic(err)
+	}
+
 	var err = models.Setup()
 
 	if err != nil {

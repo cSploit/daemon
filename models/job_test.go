@@ -2,15 +2,15 @@ package models
 
 import (
 	"github.com/cSploit/daemon/models/internal"
+	"github.com/ianschenck/envflag"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
 
-func init() {
-	internal.OpenDbForTests()
-}
-
 func TestJobHosts(t *testing.T) {
+	envflag.Parse()
+	internal.OpenDbForTests()
+
 	h := Host{IpAddr: "test"}
 	db := internal.Db
 	var jobs []Job
