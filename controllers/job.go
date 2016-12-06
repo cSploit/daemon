@@ -44,9 +44,20 @@ func jobIndex(c *gin.Context) {
 	for _, eType := range jobRelationships {
 		name := strings.ToLower(eType.Name())
 		if getId(c, name, &id) == nil {
-			entityPtr := reflect.New(eType)
-			reflections.SetField(entityPtr, "ID", id)
-			db.Error = db.Model(entityPtr).Association("Jobs").Find(&found).Error
+			entityPtr := reflect.New(eType).Interface()
+			if err := reflections.SetField(entityPtr, "ID", uint(id)); err != nil {
+				db.Error = err
+				goto fetched
+			}
+
+			ass := db.Model(entityPtr).Association("Jobs")
+
+			if ass.Error != nil {
+				db.Error = ass.Error
+				goto fetched
+			}
+
+			db.Error = ass.Find(&found).Error
 			goto fetched
 		}
 	}
