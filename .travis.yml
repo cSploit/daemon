@@ -6,3 +6,8 @@ addons:
     - libpcap-dev
 env:
   - CSPLOIT_CONFIG="${TRAVIS_BUILD_DIR}/config.json"
+
+notifications:
+  slack:
+    rooms:
+      - csploit:BYr15dcnal0Dm6UZRafBqWSC#travis
