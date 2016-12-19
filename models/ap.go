@@ -74,6 +74,8 @@ func (a *AP) checkFakeAuth(pj *ProcessJob) {
 	for {
 		if pj.ExitStatus == nil {
 			time.Sleep(time.Second * 1)
+		} else {
+			break
 		}
 	}
 

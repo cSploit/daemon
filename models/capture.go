@@ -102,6 +102,8 @@ func (c *Capture) waitCrack(pj *ProcessJob, path_to_key string) {
 	for {
 		if pj.ExitStatus == nil {
 			time.Sleep(time.Second * 1)
+		} else {
+			break
 		}
 	}
 
@@ -144,6 +146,8 @@ func (c *Capture) waitHandshakeTester(pj *ProcessJob, file *os.File) {
 	for {
 		if pj.ExitStatus == nil {
 			time.Sleep(time.Second * 1)
+		} else {
+			break
 		}
 	}
 
