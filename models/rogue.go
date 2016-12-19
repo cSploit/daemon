@@ -112,7 +112,7 @@ func (r *RogueAP) StartHostapd() (j Job, e error) {
 	}
 
 	// TODO: check if it's a valid one
-	if r.Hostapd.BSSID != nil {
+	if r.Hostapd.BSSID != "" {
 		file.WriteString("bssid=" + r.Hostapd.BSSID + "\n")
 	}
 
