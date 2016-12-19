@@ -173,7 +173,7 @@ func (r *RogueAP) SetupIface() (j Job, e error) {
 	return
 }
 
-func (r *RogueAP) SetupRoute() (j Job, error) {
+func (r *RogueAP) SetupRoute() (j Job, e error) {
 	pj, e := CreateProcessJob("route", "add", "-net", "10.0.0.0", "netmask", "255.255.255.0", "gw", "10.0.0.1")
 
 	if e == nil {
