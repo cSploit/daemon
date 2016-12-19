@@ -18,6 +18,10 @@ import (
 // TODO: trying keys jobs
 // TODO: to hashcat
 
+func init() {
+	internal.RegisterModels(&Capture{})
+}
+
 // an airodump capture file
 type Capture struct {
 	internal.Base
@@ -70,7 +74,7 @@ func (c *Capture) crackWPA() (j Job, e error) {
 		j = pj.Job
 		db := internal.Db
 		db.Model(&j).Update("Name", "CrackWpa ["+c.Ap.Bssid+"]")
-		db.Model(&j).Association("Aps").Append(c)
+		db.Model(&j).Association("Captures").Append(c)
 	}
 
 	go c.waitCrack(pj, path_to_key)
@@ -87,7 +91,7 @@ func (c *Capture) crackWEP() (j Job, e error) {
 		j = pj.Job
 		db := internal.Db
 		db.Model(&j).Update("Name", "CrackWep ["+c.Ap.Bssid+"]")
-		db.Model(&j).Association("Aps").Append(c)
+		db.Model(&j).Association("Captures").Append(c)
 	}
 
 	go c.waitCrack(pj, path_to_key)
@@ -129,7 +133,7 @@ func (c *Capture) CheckForHandshake() (j Job, e error) {
 		j = pj.Job
 		db := internal.Db
 		db.Model(&j).Update("Name", "CheckHandshake ["+c.Ap.Bssid+"]")
-		db.Model(&j).Association("Aps").Append(c)
+		db.Model(&j).Association("Captures").Append(c)
 	}
 
 	go c.waitHandshakeTester(pj, file)
