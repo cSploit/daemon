@@ -4,7 +4,7 @@ import (
 	"github.com/cSploit/daemon/models/internal"
 	"os"
 	"strconv"
-	"time"
+	"errors"
 )
 
 // TODO: add missing hostapd options (at least for wpa, wep, wps and hidden aps)
@@ -100,14 +100,14 @@ func (r *RogueAP) StartHostapd() (j Job, e error) {
 	if r.Iface.Name != "" {
 		file.WriteString("interface=" + r.Iface.Name + "\n")
 	} else {
-		e = error("Need an interface")
+		e = errors.New("Need an interface")
 		return
 	}
 
 	if r.Hostapd.SSID != "" {
 		file.WriteString("ssid=" + r.Hostapd.SSID + "\n")
 	} else {
-		e = error("Need a SSID")
+		e = errors.New("Need a SSID")
 		return
 	}
 
@@ -126,7 +126,7 @@ func (r *RogueAP) StartHostapd() (j Job, e error) {
 	} else if r.Hostapd.MacAddrAcl == 1 {
 		file.WriteString("macaddr_acl=1\n")
 	} else {
-		e = error("Invalid MacAddrAcl value, should be 0 or 1")
+		e = errors.New("Invalid MacAddrAcl value, should be 0 or 1")
 		return
 	}
 
@@ -142,7 +142,7 @@ func (r *RogueAP) StartHostapd() (j Job, e error) {
 	if r.Hostapd.AuthAlgs == 3 {
 		file.WriteString("auth_algs=3\n")
 	} else {
-		e = error("AuthAlgs must be 3")
+		e = errors.New("AuthAlgs must be 3")
 		return
 	}
 
