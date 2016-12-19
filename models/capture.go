@@ -16,6 +16,7 @@ import (
 // TODO: IVs
 
 // TODO: trying keys jobs
+// TODO: to hashcat
 
 // an airodump capture file
 type Capture struct {
