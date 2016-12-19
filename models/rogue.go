@@ -117,7 +117,7 @@ func (r *RogueAP) StartHostapd() (j Job, e error) {
 	}
 
 	// TODO: check if it's a valid one
-	if r.Hostapd.Channel != nil {
+	if r.Hostapd.Channel != 0 {
 		file.WriteString("channel=" + strconv.Itoa(r.Hostapd.Channel) + "\n")
 	}
 
