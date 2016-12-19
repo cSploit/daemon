@@ -159,3 +159,9 @@ func (c *Capture) waitHandshakeTester(pj *ProcessJob, file *os.File) {
 
 	os.Remove(file.Name())
 }
+
+func FindCapture(id uint) (c *Capture, e error) {
+	c = &Capture{}
+	e = internal.Db.Find(c, id).Error
+	return
+}
