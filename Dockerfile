@@ -9,7 +9,7 @@ WORKDIR /opt
 ADD ./* cSploit/
 WORKDIR /opt/cSploit
 
-RUN go get -t -v ./...
+RUN go get
 RUN go build -o ./cSploit
 RUN ln -s cSploit /usr/local/bin
 
