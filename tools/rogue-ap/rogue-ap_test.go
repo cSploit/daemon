@@ -2,15 +2,10 @@ package rogue_ap
 
 import (
 	"testing"
-	"github.com/ianschenck/envflag"
-	"github.com/cSploit/daemon/models/internal"
 	"github.com/stretchr/testify/require"
 )
 
 func TestRogueAP_Start(t *testing.T) {
-	envflag.Parse()
-	internal.OpenDbForTests()
-
 	rogue_bad_bssid := RogueAP{
 		BSSID: "IAmNotAMacAddress",
 	}
