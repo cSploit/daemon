@@ -37,12 +37,14 @@ func (r *RogueAP) Start() error {
 	// Check some options
 
 	// the net pkg parse lower case addresses
-	r.BSSID = strings.ToLower(r.BSSID)
+	if r.BSSID != "" {
+		r.BSSID = strings.ToLower(r.BSSID)
 
-	_, e := net.ParseMAC(r.BSSID)
-	if e != nil {
-		log.Error(e)
-		return  e
+		_, e := net.ParseMAC(r.BSSID)
+		if e != nil {
+			log.Error(e)
+			return  e
+		}
 	}
 
 	if r.DenyMac != nil {
