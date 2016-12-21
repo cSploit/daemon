@@ -14,6 +14,9 @@ notifications:
     rooms:
       - csploit:BYr15dcnal0Dm6UZRafBqWSC#travis
 
+services:
+  - docker
+
 script:
   - docker build -t csploit .
   - docker run -d csploit
