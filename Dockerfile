@@ -5,7 +5,8 @@ MAINTAINER DeveloppSoft <developpsoft@gmail.com>
 RUN apk --update add libpcap-dev git
 RUN rm -f /var/cache/apk/*
 
-ADD ./* /opt/cSploit
+RUN mkdir /opt/cSploit
+ADD ./* /opt/cSploit/
 
 WORKDIR /opt/cSploit
 RUN go get -t -v ./...
