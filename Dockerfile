@@ -1,6 +1,6 @@
-MAINTAINER DeveloppSoft <developpsoft@gmail.com>
-
 FROM golang:alpine
+
+MAINTAINER DeveloppSoft <developpsoft@gmail.com>
 
 RUN apk --update add libpcap-dev git
 RUN rm -f /var/cache/apk/*
