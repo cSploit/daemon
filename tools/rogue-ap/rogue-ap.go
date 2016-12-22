@@ -1,13 +1,13 @@
 package rogue_ap
 
 import (
-	"github.com/op/go-logging"
-	"github.com/cSploit/daemon/models"
-	"golang.org/x/net/context"
-	"strings"
-	"net"
 	"errors"
+	"github.com/cSploit/daemon/models"
+	"github.com/op/go-logging"
+	"golang.org/x/net/context"
+	"net"
 	"os"
+	"strings"
 )
 
 var (
@@ -16,17 +16,17 @@ var (
 
 type (
 	RogueAP struct {
-		Mana bool
-		Loud bool
-		DenyMac []string
+		Mana     bool
+		Loud     bool
+		DenyMac  []string
 		AllowMac []string
-		SSID string
-		BSSID string
-		Channel int
+		SSID     string
+		BSSID    string
+		Channel  int
 
 		Iface models.Iface
 
-		ctx context.Context
+		ctx    context.Context
 		cancel context.CancelFunc
 	}
 )
@@ -44,7 +44,7 @@ func (r *RogueAP) Start() error {
 		_, e := net.ParseMAC(r.BSSID)
 		if e != nil {
 			log.Error(e)
-			return  e
+			return e
 		}
 	}
 
@@ -184,10 +184,10 @@ func (r *RogueAP) Start() error {
 
 func (r *RogueAP) startProcesses(path string) {
 	// Start everything
-	hostapd, e1 := models.CreateProcessJob("hostapd-mana", path + "/hostapd.conf")
+	hostapd, e1 := models.CreateProcessJob("hostapd-mana", path+"/hostapd.conf")
 	ifconfig, e2 := models.CreateProcessJob("ifconfig", r.Iface.Name, "10.0.0.1", "netmask", "255.255.255.0")
 	route, e3 := models.CreateProcessJob("route", "add", "-net", "10.0.0.0", "netmask", "255.255.255.0", "gw", "10.0.0.1")
-	dnsmasq, e4 := models.CreateProcessJob("dnsmasq", "-z", "-C", path + "/dnsmasq.conf", "-i", r.Iface.Name, "-I", "lo", "-k")
+	dnsmasq, e4 := models.CreateProcessJob("dnsmasq", "-z", "-C", path+"/dnsmasq.conf", "-i", r.Iface.Name, "-I", "lo", "-k")
 
 	if e1 != nil || e2 != nil || e3 != nil || e4 != nil {
 		log.Error("Got an error while starting processes")

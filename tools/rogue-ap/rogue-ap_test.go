@@ -1,8 +1,8 @@
 package rogue_ap
 
 import (
-	"testing"
 	"github.com/stretchr/testify/require"
+	"testing"
 )
 
 func TestRogueAP_Start(t *testing.T) {
@@ -14,14 +14,14 @@ func TestRogueAP_Start(t *testing.T) {
 	require.NotNil(t, err)
 
 	rogue_bad_mac_deny := RogueAP{
-		DenyMac:[]string{"11:22:33:44:55:66", "NotAMacAddr"},
+		DenyMac: []string{"11:22:33:44:55:66", "NotAMacAddr"},
 	}
 
 	err = rogue_bad_mac_deny.Start()
 	require.NotNil(t, err)
 
 	rogue_bad_mac_allow := RogueAP{
-		AllowMac:[]string{"11:22:33:44:55:66", "NotAMacAddr"},
+		AllowMac: []string{"11:22:33:44:55:66", "NotAMacAddr"},
 	}
 
 	err = rogue_bad_mac_allow.Start()
