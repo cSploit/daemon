@@ -5,6 +5,7 @@ import (
 	"github.com/ianschenck/envflag"
 	"github.com/stretchr/testify/require"
 	"testing"
+	"time"
 )
 
 func TestCreateProcessJob(t *testing.T) {
@@ -52,4 +53,24 @@ func TestProcessOutput(t *testing.T) {
 	require.NotNil(t, pj.ExitStatus)
 	require.Equal(t, 0, *pj.ExitStatus)
 	require.NotEmpty(t, pj.Output)
+}
+
+func TestProcessJob_Kill(t *testing.T) {
+	envflag.Parse()
+	internal.OpenDbForTests()
+
+	pj, e := CreateProcessJob("sleep", "100")
+
+	require.Nil(t, e)
+
+	// Wait that runCommand() does its job (reach cmd.Wait()) :)
+	// TODO: make that cleaner
+	time.Sleep(time.Second)
+
+	// pj is running, now we kill it
+	e = pj.Kill()
+	require.Nil(t, e)
+
+	// Since runCommand() run onDone() completed[JobId] was filled
+	require.Equal(t, 0, <-completed[pj.JobId])
 }

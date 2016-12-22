@@ -184,3 +184,18 @@ func (pj *ProcessJob) Write(p []byte) (int, error) {
 func (pj *ProcessJob) CloseInput() {
 	pj.ioManager().CloseStdin()
 }
+
+// kill the job, runCommand will do the rest (I think)
+func (pj *ProcessJob) Kill() (e error) {
+	// Retrieve cmd
+	cmd := pj.cmd()
+
+	// Kill the proc
+	e = cmd.Process.Kill()
+
+	if e != nil {
+		log.Error(e)
+	}
+
+	return
+}
