@@ -26,14 +26,15 @@ type (
 
 		Iface models.Iface
 
-		hostapd models.Job
-		dnsmasq models.Job
-
 		ctx context.Context
+		cancel context.CancelFunc
 	}
 )
 
 func (r *RogueAP) Start() error {
+	// Build the context
+	r.ctx, r.cancel = context.WithCancel(context.Background())
+
 	// Check some options
 
 	// the net pkg parse lower case addresses
@@ -175,8 +176,36 @@ func (r *RogueAP) Start() error {
 
 	log.Debug("Dnsmasq configured")
 
-	log.Debug("Starting hostapd...")
-
+	// We will need to wait for some process, so we run it in a goroutine
+	go r.startProcesses(path)
 
 	return nil
+}
+
+func (r *RogueAP) startProcesses(path string) {
+	// Start everything
+	hostapd, e1 := models.CreateProcessJob("hostapd-mana", path + "/hostapd.conf")
+	ifconfig, e2 := models.CreateProcessJob("ifconfig", r.Iface.Name, "10.0.0.1", "netmask", "255.255.255.0")
+	route, e3 := models.CreateProcessJob("route", "add", "-net", "10.0.0.0", "netmask", "255.255.255.0", "gw", "10.0.0.1")
+	dnsmasq, e4 := models.CreateProcessJob("dnsmasq", "-z", "-C", path + "/dnsmasq.conf", "-i", r.Iface.Name, "-I", "lo", "-k")
+
+	if e1 != nil || e2 != nil || e3 != nil || e4 != nil {
+		log.Error("Got an error while starting processes")
+		r.cancel()
+		return
+	}
+
+	// We use the context to know if we need to stop...
+	// Might be a bit ugly...
+	for {
+		select {
+		// TODO: if hostapd or dnsmasq completed, kill everything
+		case <-r.ctx.Done():
+			// Kill only if we need to
+			hostapd.Kill()
+			ifconfig.Kill()
+			route.Kill()
+			dnsmasq.Kill()
+		}
+	}
 }
