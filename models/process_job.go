@@ -188,7 +188,7 @@ func (pj *ProcessJob) CloseInput() {
 // kill the job, runCommand will do the rest (I think)
 func (pj *ProcessJob) Kill() (e error) {
 	// Kill only if not completed
-	if <-completed[pj.JobId] != 0 {
+	if pj.ExitStatus == nil {
 		// Retrieve cmd
 		cmd := pj.cmd()
 
