@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"github.com/cSploit/daemon/helpers"
 	"github.com/cSploit/daemon/models"
 	"github.com/cSploit/daemon/tools/network-radar"
 	"github.com/cSploit/daemon/views"
@@ -97,7 +98,12 @@ done:
 // just an hack, will improve it when will switch to gutron
 func IfaceScanz(model *models.Iface, iface *net.Interface, passive bool) (*models.Job, error) {
 
-	nr := network_radar.NetworkRadar{Iface: iface, Passive: passive}
+	nr := network_radar.NetworkRadar{
+		Iface:    iface,
+		Passive:  passive,
+		Receiver: models.NotifyHostSeen,
+		Fetcher:  helpers.BaseFetcher,
+	}
 
 	if err := nr.Start(); err != nil {
 		return nil, err

@@ -4,5 +4,8 @@
     "args": [
       "./dev.db"
     ]
+  },
+  "scan": {
+    "passive": true
   }
 }

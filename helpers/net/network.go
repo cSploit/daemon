@@ -32,6 +32,14 @@ var (
 	log = logging.MustGetLogger("helpers")
 )
 
+var privateNetworks = [...]*net.IPNet{
+	{IP: net.IPv4(127, 0, 0, 1), Mask: net.CIDRMask(8, 32)},
+	{IP: net.IPv4(10, 0, 0, 0), Mask: net.CIDRMask(8, 32)},
+	{IP: net.IPv4(172, 16, 0, 0), Mask: net.CIDRMask(12, 32)},
+	{IP: net.IPv4(192, 168, 0, 0), Mask: net.CIDRMask(16, 32)},
+	{IP: net.IP{0xfc, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, Mask: net.CIDRMask(7, 128)},
+}
+
 // gives the interface that is used to connect to an IP
 func InterfaceForIp(ip net.IP) (net.Interface, error) {
 	ifaces, err := net.Interfaces()
@@ -69,6 +77,48 @@ func GetInterfaceIPv4(iface net.Interface) (*net.IPNet, error) {
 	return getIfaceIp(iface, true)
 }
 
+func GetAttachedIpNetworks() ([]*net.IPNet, error) {
+	ifaces, err := net.Interfaces()
+
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]*net.IPNet, 0)
+
+	for _, iface := range ifaces {
+		addrs, err := iface.Addrs()
+
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+
+		for _, addr := range addrs {
+			switch addr.(type) {
+			case *net.IPNet:
+				ipNet := addr.(*net.IPNet)
+				res = append(res, ipNet)
+			default:
+				log.Debugf("iface %s: got address <%T>: %v", iface, addr, addr)
+			}
+		}
+	}
+
+	return res, nil
+}
+
+func IsPrivate(ip net.IP) bool {
+	for _, ipNet := range privateNetworks {
+		if ipNet.Contains(ip) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// deprecated
 func GetMyEndpoints() ([]gopacket.Endpoint, error) {
 	ifaces, err := net.Interfaces()
 

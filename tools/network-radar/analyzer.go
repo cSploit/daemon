@@ -23,7 +23,6 @@ import (
 
 	ctxHelper "github.com/cSploit/daemon/helpers/ctx"
 	netHelper "github.com/cSploit/daemon/helpers/net"
-	"github.com/cSploit/daemon/models"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
@@ -31,9 +30,18 @@ import (
 )
 
 var (
-	myEndpoints     []gopacket.Endpoint
-	myEndpointsLock sync.RWMutex
+	localEndpoints = struct {
+		sync.RWMutex
+		Points []gopacket.Endpoint
+	}{}
 )
+
+type analyzer struct {
+	ctx context.Context
+	// networks that the analyzer will deal with
+	WatchedNetworks []*net.IPNet
+	Receiver        HostReceiverFunc
+}
 
 func init() {
 	//TODO spawn endpoints poller
@@ -44,28 +52,34 @@ func init() {
 		return
 	}
 
-	myEndpointsLock.Lock()
-	myEndpoints = res
-	myEndpointsLock.Unlock()
+	localEndpoints.Lock()
+	localEndpoints.Points = res
+	localEndpoints.Unlock()
 }
 
-func onPacket(pkt gopacket.Packet) {
+func (a *analyzer) isInternal(ip net.IP) bool {
+	for _, ipNet := range a.WatchedNetworks {
+		if ipNet.Contains(ip) {
+			return true
+		}
+	}
+	return false
+}
 
-	log.Debugf("onPacket(%v)", pkt)
-
+func (a *analyzer) onPacket(pkt gopacket.Packet) {
+	//TODO: Application Layer ( NetBIOS )
 	if pkt.NetworkLayer() != nil {
-		log.Debugf("received network packet: %v", pkt)
-		analyzeNetworkPkt(pkt)
+		a.analyzeNetworkPkt(pkt)
 	} else if pkt.LinkLayer() != nil {
-		analyzeLinkPkt(pkt)
+		a.analyzeLinkPkt(pkt)
 	}
 }
 
 func isOurEndpoint(e gopacket.Endpoint) bool {
-	myEndpointsLock.RLock()
-	defer myEndpointsLock.RUnlock()
+	localEndpoints.RLock()
+	defer localEndpoints.RUnlock()
 
-	for _, ee := range myEndpoints {
+	for _, ee := range localEndpoints.Points {
 		if ee == e {
 			return true
 		}
@@ -73,13 +87,13 @@ func isOurEndpoint(e gopacket.Endpoint) bool {
 	return false
 }
 
-func analyzeLinkPkt(pkt gopacket.Packet) {
+func (a *analyzer) analyzeLinkPkt(pkt gopacket.Packet) {
 	if arpLayer := pkt.Layer(layers.LayerTypeARP); arpLayer != nil {
-		analyzeARP(pkt)
+		a.analyzeARP(pkt)
 	}
 }
 
-func analyzeARP(pkt gopacket.Packet) {
+func (a *analyzer) analyzeARP(pkt gopacket.Packet) {
 	ll := pkt.LinkLayer()
 	flow := ll.LinkFlow()
 
@@ -88,12 +102,20 @@ func analyzeARP(pkt gopacket.Packet) {
 		return
 	}
 
+	if a.Receiver == nil {
+		log.Debugf("Receiver is null, ARP packet lost")
+		return
+	}
+
 	arp := pkt.Layer(layers.LayerTypeARP).(*layers.ARP)
 
-	log.Debugf("received an ARP packet: %v", arp)
+	hwAddr := net.HardwareAddr(flow.Src().Raw())
+	ipAddr := net.IP(arp.SourceProtAddress)
+
+	go a.Receiver(hwAddr, ipAddr, nil)
 }
 
-func analyzeNetworkPkt(pkt gopacket.Packet) {
+func (a *analyzer) analyzeNetworkPkt(pkt gopacket.Packet) {
 	ll := pkt.LinkLayer()
 	nl := pkt.NetworkLayer()
 
@@ -102,7 +124,7 @@ func analyzeNetworkPkt(pkt gopacket.Packet) {
 
 	var lle, nle gopacket.Endpoint
 
-	if !isOurEndpoint(llSrc) {
+	if !isOurEndpoint(nlSrc) {
 		lle = llSrc
 		nle = nlSrc
 	} else {
@@ -118,17 +140,27 @@ func analyzeNetworkPkt(pkt gopacket.Packet) {
 	hwAddr := net.HardwareAddr(lle.Raw())
 	ipAddr := net.IP(nlSrc.Raw())
 
-	if err := models.NotifyHostSeen(hwAddr, ipAddr, ""); err != nil {
-		log.Error(err)
+	if a.isInternal(ipAddr) || netHelper.IsPrivate(ipAddr) {
+		go a.Receiver(hwAddr, ipAddr, nil)
 	}
 }
 
 // start sniffing and analyzing packets
-func startAnalyze(ctx context.Context) error {
+func (a *analyzer) Start() error {
 	ifName := "any"
 
-	if ctxHelper.HaveIface(ctx) {
-		ifName = ctxHelper.GetIface(ctx).Name
+	if ctxHelper.HaveIface(a.ctx) {
+		ifName = ctxHelper.GetIface(a.ctx).Name
+	}
+
+	if len(a.WatchedNetworks) == 0 {
+		networks, err := netHelper.GetAttachedIpNetworks()
+
+		if err != nil {
+			return err
+		}
+
+		a.WatchedNetworks = networks
 	}
 
 	handle, err := pcap.OpenLive(ifName, 1024, true, pcap.BlockForever)
@@ -141,15 +173,15 @@ func startAnalyze(ctx context.Context) error {
 
 	go func() {
 		defer handle.Close()
-
 		for {
 			select {
 			case p, more := <-source.Packets():
 				if !more {
 					return
 				}
-				onPacket(p)
-			case <-ctx.Done():
+				//TODO: use workers
+				a.onPacket(p)
+			case <-a.ctx.Done():
 				return
 			}
 		}

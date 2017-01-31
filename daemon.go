@@ -20,7 +20,6 @@ package main
 import (
 	"github.com/cSploit/daemon/controllers"
 	"github.com/cSploit/daemon/models"
-	"github.com/cSploit/daemon/tools/network-radar"
 	"github.com/gin-gonic/gin"
 	"github.com/lair-framework/go-nmap"
 	"github.com/op/go-logging"
@@ -29,7 +28,6 @@ import (
 	"github.com/cSploit/daemon/config"
 	"github.com/ianschenck/envflag"
 	"github.com/jinzhu/gorm"
-	"gopkg.in/guregu/null.v3"
 	"io/ioutil"
 	"net"
 	"os"
@@ -73,12 +71,14 @@ func initAllHostWithNetwork(ifName string, ipAddr string) {
 }
 
 func addSomeRemoteHost() {
+	g, f := "google.com", "facebook.com"
+
 	h1 := &models.Host{
-		Name:   null.StringFrom("google.com"),
+		Name:   &g,
 		IpAddr: "172.217.16.174",
 	}
 	h2 := &models.Host{
-		Name:   null.StringFrom("facebook.com"),
+		Name:   &f,
 		IpAddr: "31.13.76.68",
 	}
 	db := models.GetDbInstance()
@@ -95,6 +95,11 @@ func startRadars() {
 	}
 
 	for _, iface := range ifaces {
+
+		if iface.Flags&net.FlagLoopback != 0 {
+			continue
+		}
+
 		i, err := models.FindIfaceByName(iface.Name)
 
 		if err == gorm.ErrRecordNotFound {
@@ -102,13 +107,6 @@ func startRadars() {
 		}
 
 		if err != nil {
-			log.Error(err)
-			continue
-		}
-
-		nr := network_radar.NetworkRadar{Iface: &iface, Passive: config.Conf.Scan.Passive}
-
-		if err := nr.Start(); err != nil {
 			log.Error(err)
 			continue
 		}
@@ -138,15 +136,6 @@ func main() {
 
 	startRadars()
 
-	err := loadScanFromFile("sample_nmap_out.xml")
-
-	if err != nil {
-		log.Errorf("Error loading nmap output: %v", err)
-	}
-
-	initAllHostWithNetwork("wlan0", "10.169.64.0/20")
-	addSomeRemoteHost()
-
 	router := gin.Default()
 
 	hosts := router.Group("/hosts")
@@ -161,17 +150,38 @@ func main() {
 		{
 			controllers.ServicesController.Setup(services)
 		}
+		jobs := hc.NestedGroup(hosts, "/jobs")
+		{
+			controllers.JobController.Setup(jobs)
+		}
 	}
 	networks := router.Group("networks")
 	{
-		controllers.NetworkController.Setup(networks)
+		nc := controllers.NetworkController
+		nc.Setup(networks)
+
+		jobs := nc.NestedGroup(networks, "/jobs")
+		{
+			controllers.JobController.Setup(jobs)
+		}
 	}
 	ifaces := router.Group("ifaces")
 	{
 		ic := controllers.IfaceController
 		ic.Setup(ifaces)
-		//TODO: gutron
-		ifaces.POST("scan", controllers.IfaceScan)
+		actions := ic.NestedGroup(ifaces, "/")
+		{
+			actions.POST("scan", controllers.IfaceScan)
+		}
+
+		jobs := ic.NestedGroup(ifaces, "/jobs")
+		{
+			controllers.JobController.Setup(jobs)
+		}
+	}
+	jobs := router.Group("jobs")
+	{
+		controllers.JobController.Setup(jobs)
 	}
 
 	router.Run(":8080")

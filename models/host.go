@@ -22,7 +22,6 @@ import (
 	"github.com/cSploit/daemon/models/internal"
 	"github.com/lair-framework/go-nmap"
 	"github.com/op/go-logging"
-	"gopkg.in/guregu/null.v3"
 	"net"
 	"time"
 )
@@ -34,16 +33,16 @@ func init() {
 var log = logging.MustGetLogger("daemon")
 
 type Host struct {
-	ID        uint        `json:"id"`
-	CreatedAt time.Time   `json:"first_seen"`
-	UpdatedAt time.Time   `json:"last_seen"`
-	Name      null.String `json:"name"`
-	IpAddr    string      `gorm:"index" json:"ip_addr"`
-	HwAddr    *HwAddr     `json:"hw_addr"`
-	Ports     []Port      `json:"ports"`
-	Network   *Network    `json:"-"`
-	NetworkID uint        `json:"network_id,omitempty"`
-	Jobs      []Job       `json:"jobs" gorm:"many2many:job_hosts"`
+	ID        uint      `json:"id"`
+	CreatedAt time.Time `json:"first_seen"`
+	UpdatedAt time.Time `json:"last_seen"`
+	Name      *string   `json:"name"`
+	IpAddr    string    `gorm:"index" json:"ip_addr"`
+	HwAddr    *HwAddr   `json:"hw_addr"`
+	Ports     []Port    `json:"ports"`
+	Network   *Network  `json:"-"`
+	NetworkID uint      `json:"network_id,omitempty"`
+	Jobs      []Job     `json:"jobs" gorm:"many2many:job_hosts"`
 }
 
 func NewHost(h nmap.Host) *Host {
@@ -73,11 +72,12 @@ func NewHost(h nmap.Host) *Host {
 	return res
 }
 
-func NotifyHostSeen(hwAddr net.HardwareAddr, ipAddr net.IP, name string) error {
+func NotifyHostSeen(hwAddr net.HardwareAddr, ipAddr net.IP, name *string) {
 	hwId, err := netHelper.MacAddrToUInt(hwAddr)
 
 	if err != nil {
-		return err
+		log.Error(err)
+		return
 	}
 
 	var HwAddrEntity HwAddr
@@ -85,43 +85,39 @@ func NotifyHostSeen(hwAddr net.HardwareAddr, ipAddr net.IP, name string) error {
 	dbRes := internal.Db.Preload("Host").Find(&HwAddrEntity, hwId)
 
 	if dbRes.RecordNotFound() {
-		return onNewHost(hwAddr, ipAddr, name)
+		onNewHost(hwAddr, ipAddr, name)
 	} else if dbRes.Error != nil {
-		return dbRes.Error
+		log.Error(dbRes.Error)
+	} else if host := HwAddrEntity.Host; host == nil {
+		onNewHostWithHwAddr(&HwAddrEntity, ipAddr, name)
+	} else {
+		onHostSeen(host, ipAddr, name)
 	}
-
-	host := HwAddrEntity.Host
-
-	if host == nil {
-		return onNewHostWithHwAddr(&HwAddrEntity, ipAddr, name)
-	}
-
-	return onHostSeen(host, ipAddr, name)
 }
 
 //TODO: fire an event for each of these functions
 
-func onNewHost(hwAddr net.HardwareAddr, ipAddr net.IP, name string) error {
-	hw, err := NewHwAddr(hwAddr)
-
-	if err != nil {
-		return err
+func onNewHost(hwAddr net.HardwareAddr, ipAddr net.IP, name *string) {
+	if hw, err := NewHwAddr(hwAddr); err != nil {
+		log.Error(err)
+	} else {
+		onNewHostWithHwAddr(hw, ipAddr, name)
 	}
-
-	return onNewHostWithHwAddr(hw, ipAddr, name)
 }
 
-func onNewHostWithHwAddr(hwAddr *HwAddr, ipAddr net.IP, name string) error {
-	nullName := null.NewString(name, len(name) > 0)
+func onNewHostWithHwAddr(hwAddr *HwAddr, ipAddr net.IP, name *string) {
+	host := Host{HwAddr: hwAddr, IpAddr: ipAddr.String(), Name: name}
 
-	host := Host{HwAddr: hwAddr, IpAddr: ipAddr.String(), Name: nullName}
-
-	return internal.Db.Create(&host).Error
+	if err := internal.Db.Create(&host).Error; err != nil {
+		log.Error(err)
+	}
 }
 
-func onHostSeen(host *Host, ipAddr net.IP, name string) error {
+func onHostSeen(host *Host, ipAddr net.IP, name *string) {
 	host.IpAddr = ipAddr.String()
-	host.Name = null.NewString(name, len(name) > 0)
+	host.Name = name
 	host.UpdatedAt = time.Now()
-	return internal.Db.Save(host).Error
+	if err := internal.Db.Save(host).Error; err != nil {
+		log.Error(err)
+	}
 }

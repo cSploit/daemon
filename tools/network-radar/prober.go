@@ -301,6 +301,7 @@ func ProbeNetBIOS(ctx context.Context) error {
 
 func ProbeKnownHosts(ctx context.Context) error {
 	ipNet := ctxHelper.GetIpNet(ctx)
+	fetcher := ctx.Value(fetcherKey).(HostFetcher)
 	ctx, cancel := context.WithCancel(ctx)
 
 	if net4 := netHelper.IPNetTo4(ipNet); net4 == nil {
@@ -324,7 +325,9 @@ func ProbeKnownHosts(ctx context.Context) error {
 
 	ctx = ctxHelper.WithIface(ctx, iface)
 
-	walker := model.NewKnownHostsWalker(ipNet)
+	walker := func(ctx context.Context) <-chan net.IP {
+		return fetcher.Find()
+	}
 	ips := loopKnownHosts(ctx, time.Second, walker)
 
 	NGens := int(math.Ceil(float64(N) / hosts4sock))

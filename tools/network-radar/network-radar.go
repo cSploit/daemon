@@ -36,11 +36,19 @@ type NetworkRadar struct {
 	Addresses []net.Addr
 	ctx       context.Context
 	Cancel    context.CancelFunc
+	Receiver  HostReceiverFunc
+	Fetcher   HostFetcher
 }
 
 func (nr *NetworkRadar) startProbing() error {
 	var lastErr error
 	var skipLoopback bool
+
+	if nr.Fetcher == nil {
+		return errors.New("Active scan requires an HostFetcher")
+	}
+
+	nr.Fetcher = nr.Fetcher.WithContext(nr.ctx)
 
 	if len(nr.Addresses) == 0 {
 		if nr.Iface != nil {
@@ -73,6 +81,7 @@ func (nr *NetworkRadar) startProbing() error {
 		}
 
 		ctx := ctxHelper.WithIpNet(nr.ctx, ipNet)
+		ctx = context.WithValue(ctx, fetcherKey, nr.Fetcher)
 
 		if err := ProbeNetBIOS(ctx); err != nil {
 			log.Error(err)
@@ -103,7 +112,9 @@ func (nr *NetworkRadar) Start() error {
 		nr.ctx = ctxHelper.WithIface(nr.ctx, *(nr.Iface))
 	}
 
-	if err := startAnalyze(nr.ctx); err != nil {
+	a := analyzer{ctx: nr.ctx, Receiver: nr.Receiver}
+
+	if err := a.Start(); err != nil {
 		return err
 	}
 
