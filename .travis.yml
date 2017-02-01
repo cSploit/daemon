@@ -1,0 +1,6 @@
+language: go
+
+notifications:
+  slack:
+    rooms:
+      - csploit:BYr15dcnal0Dm6UZRafBqWSC#travis
