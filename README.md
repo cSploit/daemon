@@ -6,7 +6,7 @@ cSploit daemon (metasploit RPC feature)
 This is a feature of the cSploit project.
 It manage the interactions with the Metasploit framework through an implementation of the MSFRPC API.
 
-Official MSFRPC documentation: `https://rapid7.github.io/metasploit-framework/api/Msf/RPC.html`
+[Official MSFRPC documentation](https://rapid7.github.io/metasploit-framework/api/Msf/RPC.html)
 
 Env setup
 ---------
@@ -21,5 +21,5 @@ To run tests simply run:
 
 ```bash
 go test -v {module_you_want_to_test}
---> go test -v AuthMSF_test.go if you want to test the calls related to the authentication
+e.g: go test -v AuthMSF_test.go if you want to test the calls related to the authentication
 ```
