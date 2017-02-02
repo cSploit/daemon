@@ -3,7 +3,7 @@ package rpc_test
 import (
 	"testing"
 
-	. "github.com/gomsf"
+	. "github.com/cSploit/daemon"
 )
 
 var r = RPC{Host: "127.0.0.1", Port: 55553}
