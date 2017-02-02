@@ -1,7 +1,7 @@
 cSploit daemon (metasploit RPC feature)
 ======================================
 
-[![Build Status](https://travis-ci.org/cSploit/daemon.svg?branch=develop)](https://travis-ci.org/cSploit/daemon)
+[![Build Status](https://travis-ci.org/cSploit/daemon.svg?branch=feature/msf)](https://travis-ci.org/cSploit/daemon)
 
 This is a feature of the cSploit project.
 It manage the interactions with the Metasploit framework through an implementation of the MSFRPC API.
