@@ -4,7 +4,7 @@ cSploit daemon
 [![Build Status](https://travis-ci.org/cSploit/daemon.svg?branch=develop)](https://travis-ci.org/cSploit/daemon)
 
 This is the core of the cSploit project.
-It is made to manage, provide, find and work with found resources.
+It has been made to manage, provide, find and work with found resources.
 
 As of now this software does not work, it's just a preview to 
 perform an hand-off of the work as I found other devs that want to contribute.
