@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"gopkg.in/vmihailenco/msgpack.v2"
+	"github.com/ugorji/go/codec"
 )
 
 type ServerException struct {
@@ -33,32 +33,47 @@ func (r *RPC) Call(args ...interface{}) map[string]interface{} {
 		copy(args[1:], args[1:])
 		args[1] = r.Token
 	}
-	encoded, err := msgpack.Marshal(args)
+
+	fmt.Printf("Open content: \n", args)
+
+	var msgpackH codec.MsgpackHandle
+	msgpackH.RawToString = true
+	var encodedBody []byte
+	var encoder *codec.Encoder
+	encoder = codec.NewEncoderBytes(&encodedBody, &msgpackH)
+	err := encoder.Encode(args)
 	if err != nil {
-		log.Fatalln("error marshalling:", err)
+		log.Fatalln("Error encoding arguments:", err)
 	}
+	fmt.Printf("Encoding content: \n", encodedBody)
+
+	/** http requests handler */
 	httpClient := http.Client{}
-	httpData := bytes.NewReader(encoded)
+	httpData := bytes.NewReader(encodedBody)
 	httpReq, err := http.NewRequest("POST", "http://"+r.Host+":"+strconv.Itoa(r.Port)+"/api/1.0", httpData)
 	if err != nil {
 		log.Fatalln("error with httpreq:", err)
 	}
 	httpReq.Header.Add("Content-Type", "binary/message-pack")
-	httpReq.Header.Add("Content-Length", strconv.Itoa(len(encoded)))
-	// fmt.Printf("httpReq: %v\n", httpReq)
+	httpReq.Header.Add("Content-Length", strconv.Itoa(len(encodedBody)))
+	fmt.Printf("httpReq: %v\n", httpReq)
 	response, err := httpClient.Do(httpReq)
 	if err != nil {
 		log.Fatalf("Unable to connect to the MSFPRC. Error: %v\n", err)
 	}
-	body, err := ioutil.ReadAll(response.Body)
+
+	/** ... var body contains the data to decode from */
+	decodedBody, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		log.Fatalln("reading body failed:", err)
 	}
 	var out map[string]interface{}
-	err = msgpack.Unmarshal(body, &out)
+	var h codec.Handle = new(codec.MsgpackHandle)
+	var decoder *codec.Decoder = codec.NewDecoderBytes(decodedBody, h)
+	err = decoder.Decode(out)
 	if err != nil {
 		log.Fatalln("unmarshal failed:", err)
 	}
-	fmt.Printf("return from auth calling: %v\n", out)
+	fmt.Printf("return from RPC calling: %v\n", out)
 	return out
 }
