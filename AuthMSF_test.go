@@ -6,17 +6,18 @@ import (
 	. "github.com/cSploit/daemon"
 )
 
-var r = RPC{Host: "127.0.0.1", Port: 55553}
+var r = RPC{Host: "192.168.0.23", Port: 55552}
 
 func TestAuthLogin(t *testing.T) {
 	t.Log("Testing MSFRPC authentication")
-	rpcAuth := r.AuthLogin("kamel", "toto")
+	rpcAuth := r.AuthLogin("msf", "Xh3BtmUc")
 	if rpcAuth.Error == true {
 		t.Errorf("rpcAuth authentication failed")
 	}
 	t.Logf("token received: ", r.Token)
 }
 
+/*
 func TestAuthTokenList(t *testing.T) {
 	t.Log("Testing MSFRPC token list")
 	rpcAuthTokenList := r.AuthTokenList()
@@ -41,3 +42,4 @@ func TestAuthTokenRemove(t *testing.T) {
 	}
 	t.Errorf("rpcAuthTokenRemove failed")
 }
+*/
