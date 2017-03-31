@@ -21,6 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"net"
 	"testing"
+	"github.com/lair-framework/go-nmap"
 )
 
 func TestBuildBroadcastAddress(t *testing.T) {
@@ -78,5 +79,34 @@ func TestMacConversion(t *testing.T) {
 	}
 	if _, err := MacAddrToUInt(mac3); err != nil {
 		t.Fatalf("unable to convert %v to id: %v", mac3, err)
+	}
+}
+
+func TestMACStringToUInt(t *testing.T) {
+	samples := []struct {
+		Addr string
+		Val  uint64
+	}{
+		{"68:a3:c4:6f:fb:88", 115052584631176},
+	}
+
+	for _, s := range samples {
+		m, err := net.ParseMAC(s.Addr)
+
+		if err != nil {
+			t.Fatalf("Sample MAC '%s' is broken, please fix it: %v", s.Addr, err)
+		}
+
+		n := nmap.Address{Addr: s.Addr, AddrType: "mac", Vendor: "Cisco"}
+
+		for _, i := range []interface{}{m, n, s.Addr} {
+			res, err := ParseHwAddr(i)
+
+			if err != nil {
+				t.Errorf("failed to create HwAddr from interface %T: %v", i, err)
+			} else if res != s.Val {
+				t.Errorf("using interface %T: expected %v, got %v", i, s.Val, res)
+			}
+		}
 	}
 }

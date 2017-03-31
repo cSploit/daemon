@@ -22,13 +22,11 @@ import "github.com/cSploit/daemon/models"
 type hostIdxElem struct {
 	models.Host
 	OpenPortCount int    `json:"open_port_count"`
-	HwAddrStr     string `json:"hw_addr,omitempty"`
 	HidePorts     string `json:"ports,omitempty"`
 }
 
 type hostShowView struct {
 	models.Host
-	HwAddrStr     string      `json:"hw_addr,omitempty"`
 	HideNetworkID string      `json:"network_id,omitempty"`
 	PortsView     interface{} `json:"ports"`
 	NetworkView   interface{} `json:"network,omitempty"`
@@ -39,18 +37,11 @@ func HostsIndex(arg interface{}) interface{} {
 	res := make([]hostIdxElem, len(hosts))
 
 	for i, h := range hosts {
-		var hw string
-
-		if h.HwAddr != nil {
-			hw = h.HwAddr.Addr
-		}
-
 		// we assume that h.Ports contains all
 		// and only the open ports
 
 		res[i] = hostIdxElem{
 			Host:          h,
-			HwAddrStr:     hw,
 			OpenPortCount: len(h.Ports),
 		}
 	}
@@ -60,12 +51,7 @@ func HostsIndex(arg interface{}) interface{} {
 
 func HostsShow(arg interface{}) interface{} {
 	host := arg.(models.Host)
-	var hw string
 	var net interface{}
-
-	if host.HwAddr != nil {
-		hw = host.HwAddr.Addr
-	}
 
 	portsView := PortIndex(host.Ports)
 
@@ -75,7 +61,6 @@ func HostsShow(arg interface{}) interface{} {
 
 	res := hostShowView{
 		Host:        host,
-		HwAddrStr:   hw,
 		PortsView:   portsView,
 		NetworkView: net,
 	}

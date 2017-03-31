@@ -3,7 +3,6 @@ package models
 import (
 	"github.com/cSploit/daemon/models/internal"
 	"github.com/ianschenck/envflag"
-	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/require"
 	"testing"
 )

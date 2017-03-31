@@ -34,8 +34,7 @@ func hostsIndex(c *gin.Context) {
 	hosts := make([]models.Host, 0)
 	db := models.GetDbInstance()
 
-	dbRes := db.Preload("Ports", "state = ?", "open").
-		Preload("HwAddr").Find(&hosts)
+	dbRes := db.Preload("Ports", "state = ?", "open").Find(&hosts)
 
 	renderView(c, views.HostsIndex, hosts, dbRes)
 }
@@ -52,7 +51,7 @@ func hostsShow(c *gin.Context) {
 	var host models.Host
 
 	dbRes := db.Preload("Ports").Preload("Ports.Service").
-		Preload("HwAddr").Preload("Network").Find(&host, id)
+		Preload("Network").Find(&host, id)
 
 	renderView(c, views.HostsShow, host, dbRes)
 }

@@ -26,6 +26,7 @@ import (
 	"github.com/op/go-logging"
 	"math"
 	"net"
+	"github.com/lair-framework/go-nmap"
 )
 
 var (
@@ -156,6 +157,33 @@ func GetMyEndpoints() ([]gopacket.Endpoint, error) {
 	}
 
 	return res, nil
+}
+
+func ParseHwAddr(a interface{}) (uint64, error) {
+	switch a.(type) {
+	default:
+		return 0, fmt.Errorf("unexpected type %T", a)
+	case nmap.Address:
+		str := a.(nmap.Address).Addr
+		// vendor = a.(nmap.Address).Vendor
+		return MACStringToUInt(str)
+	case string:
+		str := a.(string)
+		return MACStringToUInt(str)
+	case net.HardwareAddr:
+		return MacAddrToUInt(a.(net.HardwareAddr))
+	case *net.HardwareAddr:
+		return MacAddrToUInt(*(a.(*net.HardwareAddr)))
+	}
+}
+
+func MACStringToUInt(str string) (uint64, error) {
+	hw, err := net.ParseMAC(str)
+	if err != nil {
+		log.Warning("Bad MAC Address: ", err)
+		return 0, err
+	}
+	return MacAddrToUInt(hw)
 }
 
 func MacAddrToUInt(hw net.HardwareAddr) (uint64, error) {

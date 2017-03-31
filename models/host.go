@@ -36,9 +36,10 @@ type Host struct {
 	ID        uint      `json:"id"`
 	CreatedAt time.Time `json:"first_seen"`
 	UpdatedAt time.Time `json:"last_seen"`
-	Name      *string   `json:"name"`
+	Name      *string   `json:"name,omitempty"`
 	IpAddr    string    `gorm:"index" json:"ip_addr"`
-	HwAddr    *HwAddr   `json:"hw_addr"`
+	HwAddr    *string   `json:"hw_addr,omitempty"`
+	HwAddrId  *uint64    `gorm:"index" json:"-"`
 	Ports     []Port    `json:"ports"`
 	Network   *Network  `json:"-"`
 	NetworkID uint      `json:"network_id,omitempty"`
@@ -56,12 +57,13 @@ func NewHost(h nmap.Host) *Host {
 
 	for _, a := range h.Addresses {
 		if a.AddrType == "mac" {
-			var err error
-			res.HwAddr, err = NewHwAddr(a)
+			hwId, err := netHelper.ParseHwAddr(a)
 
 			if err != nil {
 				log.Warningf("unable to load MAC address: %v", err)
 			}
+			res.HwAddrId = &hwId
+			res.HwAddr = &a.Addr
 
 			log.Debugf("created HW Addr: %v", res.HwAddr)
 		} else {
@@ -80,36 +82,38 @@ func NotifyHostSeen(hwAddr net.HardwareAddr, ipAddr net.IP, name *string) {
 		return
 	}
 
-	var HwAddrEntity HwAddr
+	var host Host
 
-	dbRes := internal.Db.Preload("Host").Find(&HwAddrEntity, hwId)
+	dbRes := internal.Db.Find(&host, "hw_addr_id = ?", hwId)
 
 	if dbRes.RecordNotFound() {
 		onNewHost(hwAddr, ipAddr, name)
 	} else if dbRes.Error != nil {
 		log.Error(dbRes.Error)
-	} else if host := HwAddrEntity.Host; host == nil {
-		onNewHostWithHwAddr(&HwAddrEntity, ipAddr, name)
 	} else {
-		onHostSeen(host, ipAddr, name)
+		onHostSeen(&host, ipAddr, name)
 	}
 }
 
 //TODO: fire an event for each of these functions
 
 func onNewHost(hwAddr net.HardwareAddr, ipAddr net.IP, name *string) {
-	if hw, err := NewHwAddr(hwAddr); err != nil {
+	if hwId, err := netHelper.MacAddrToUInt(hwAddr); err != nil {
 		log.Error(err)
+		return
 	} else {
-		onNewHostWithHwAddr(hw, ipAddr, name)
-	}
-}
+		hwStr := hwAddr.String()
 
-func onNewHostWithHwAddr(hwAddr *HwAddr, ipAddr net.IP, name *string) {
-	host := Host{HwAddr: hwAddr, IpAddr: ipAddr.String(), Name: name}
+		host := Host {
+			HwAddr: &hwStr,
+			HwAddrId: &hwId,
+			IpAddr: ipAddr.String(),
+			Name: name,
+		}
 
-	if err := internal.Db.Create(&host).Error; err != nil {
-		log.Error(err)
+		if err := internal.Db.Create(&host).Error; err != nil {
+			log.Error(err)
+		}
 	}
 }
 
