@@ -57,6 +57,10 @@ func walkNetwork(ctx context.Context) <-chan net.IP {
 		}
 
 		for netHelper.NextIP(ip); !ip.Equal(bcast); netHelper.NextIP(ip) {
+			if !ip.IsGlobalUnicast() {
+				continue
+			}
+
 			res := netHelper.CopyIP(ip)
 			select {
 			case c <- res:
