@@ -48,8 +48,8 @@ func TestNewHwAddr(t *testing.T) {
 				t.Errorf("failed to create HwAddr from interface %T: %v", i, err)
 			}
 
-			if res.RawValue != s.Val {
-				t.Errorf("using interface %T: expected %v, got %v", i, s.Val, res.RawValue)
+			if res.ID != s.Val {
+				t.Errorf("using interface %T: expected %v, got %v", i, s.Val, res.ID)
 			}
 		}
 

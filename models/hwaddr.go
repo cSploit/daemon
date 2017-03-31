@@ -30,8 +30,7 @@ func init() {
 }
 
 type HwAddr struct {
-	ID       uint
-	RawValue uint64 `gorm:"index"`
+	ID       uint64
 	Addr     string
 	Vendor   string
 	HostId   uint
@@ -68,7 +67,7 @@ func NewHwAddr(a interface{}) (*HwAddr, error) {
 		return &HwAddr{}, err
 	}
 
-	return &HwAddr{RawValue: id, Addr: str, Vendor: vendor}, nil
+	return &HwAddr{ID: id, Addr: str, Vendor: vendor}, nil
 }
 
 func MACStringToRaw(str string) (uint64, error) {
