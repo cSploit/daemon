@@ -114,8 +114,7 @@ func loopKnownHosts(ctx context.Context, loopDuration time.Duration, walker mode
 }
 
 func nbProbe(ctx context.Context, c <-chan net.IP) (<-chan struct{}, error) {
-	laddr := &net.UDPAddr{IP: net.IPv4zero}
-	nbConn, err := net.ListenUDP("udp", laddr)
+	nbConn, err := net.ListenUDP("udp", nil)
 
 	if err != nil {
 		return nil, err
