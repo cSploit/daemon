@@ -2,7 +2,7 @@
   "db": {
     "dialect": "sqlite3",
     "args": [
-      "./dev.db"
+      "./dev.db?_busy_timeout=5000"
     ]
   },
   "scan": {
