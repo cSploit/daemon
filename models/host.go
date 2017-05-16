@@ -39,7 +39,7 @@ type Host struct {
 	Name      *string   `json:"name,omitempty"`
 	IpAddr    string    `gorm:"index" json:"ip_addr"`
 	HwAddr    *string   `json:"hw_addr,omitempty"`
-	HwAddrId  *uint64    `gorm:"index" json:"-"`
+	HwAddrId  *uint64   `gorm:"index" json:"-"`
 	Ports     []Port    `json:"ports"`
 	Network   *Network  `json:"-"`
 	NetworkID uint      `json:"network_id,omitempty"`
@@ -104,11 +104,11 @@ func onNewHost(hwAddr net.HardwareAddr, ipAddr net.IP, name *string) {
 	} else {
 		hwStr := hwAddr.String()
 
-		host := Host {
-			HwAddr: &hwStr,
+		host := Host{
+			HwAddr:   &hwStr,
 			HwAddrId: &hwId,
-			IpAddr: ipAddr.String(),
-			Name: name,
+			IpAddr:   ipAddr.String(),
+			Name:     name,
 		}
 
 		if err := internal.Db.Create(&host).Error; err != nil {
@@ -118,10 +118,13 @@ func onNewHost(hwAddr net.HardwareAddr, ipAddr net.IP, name *string) {
 }
 
 func onHostSeen(host *Host, ipAddr net.IP, name *string) {
-	host.IpAddr = ipAddr.String()
-	host.Name = name
-	host.UpdatedAt = time.Now()
-	if err := internal.Db.Save(host).Error; err != nil {
-		log.Error(err)
+	now := time.Now()
+	if host.UpdatedAt.Add(time.Second).Before(now) {
+		host.IpAddr = ipAddr.String()
+		host.Name = name
+		host.UpdatedAt = now
+		if err := internal.Db.Save(host).Error; err != nil {
+			log.Error(err)
+		}
 	}
 }
