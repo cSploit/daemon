@@ -2,6 +2,7 @@ package internal
 
 import (
 	"github.com/cSploit/daemon/config"
+	"github.com/ianschenck/envflag"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"sync"
@@ -53,6 +54,8 @@ func ClearDb() {
 
 func OpenDbForTests() {
 	once.Do(func() {
+		envflag.Parse()
+
 		if err := config.Load(); err != nil {
 			panic(err)
 		}
