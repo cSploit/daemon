@@ -21,6 +21,7 @@ import (
 	"github.com/cSploit/daemon/controllers"
 	"github.com/cSploit/daemon/models"
 	"github.com/gin-gonic/gin"
+	"gopkg.in/gin-contrib/cors.v1"
 	"github.com/lair-framework/go-nmap"
 	"github.com/op/go-logging"
 
@@ -137,6 +138,8 @@ func main() {
 	startRadars()
 
 	router := gin.Default()
+
+	router.Use(cors.Default()) //TODO: true CORS rules
 
 	hosts := router.Group("/hosts")
 	{
