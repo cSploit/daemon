@@ -21,7 +21,7 @@ To work with Go lang you need to specify a path where Go will download
 the required modules: `export GOPATH="$HOME/.gocode"` for instance.
 
 Install `libpcap-dev libc-dev gcc git go` packages,
-then get the sources `go get -u github.com/cSploit/daemon`.
+then get the sources `go get -t -u github.com/cSploit/daemon`.
 
 After that sources are ready to be modified or built at `$GOPATH/src/github.com/cSploit/daemon`.
 
